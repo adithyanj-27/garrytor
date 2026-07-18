@@ -96,6 +96,12 @@ export class App {
     }
 
     const hash = window.location.hash;
+
+    // Guard: If the URL contains OAuth callback parameters, wait for Supabase to parse them.
+    // Overwriting the hash now will delete the token before Supabase can authenticate the session.
+    if (hash.includes('access_token=') || hash.includes('error=')) {
+      return;
+    }
     
     // Check if explicitly trying to log in/sign up
     if (hash === '#/login') {
