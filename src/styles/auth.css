@@ -1,0 +1,118 @@
+.auth-card {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-xxl);
+  width: 100%;
+  max-width: 420px;
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
+}
+
+.auth-header {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.auth-logo {
+  font-family: var(--font-family-logo);
+  font-size: 34px;
+  font-style: italic;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.auth-logo span.brand-glow {
+  background: linear-gradient(135deg, var(--accent-color) 0%, #ff5263 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  padding-right: 4px; /* prevents clipping italic letter tails */
+}
+
+.auth-tagline {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.auth-divider:not(:empty)::before {
+  margin-right: var(--spacing-md);
+}
+
+.auth-divider:not(:empty)::after {
+  margin-left: var(--spacing-md);
+}
+
+.btn-google {
+  background-color: #fff;
+  color: #000;
+  border: 1px solid #fff;
+  font-weight: 500;
+  justify-content: center;
+}
+
+.btn-google:hover:not(:disabled) {
+  background-color: #f1f1f1;
+  border-color: #f1f1f1;
+  box-shadow: 0 4px 12px rgba(255,255,255,0.1);
+}
+
+.auth-switch {
+  text-align: center;
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.auth-switch-link {
+  color: var(--accent-color);
+  cursor: pointer;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.auth-switch-link:hover {
+  color: var(--accent-hover);
+  text-decoration: underline;
+}
+
+.auth-error {
+  background-color: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: var(--error);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  text-align: center;
+}
