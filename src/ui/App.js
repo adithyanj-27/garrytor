@@ -137,7 +137,7 @@ export class App {
 
     // Left Panel: Presets & History
     const leftPanel = document.createElement('div');
-    leftPanel.className = 'editor-panel';
+    leftPanel.className = 'editor-panel left';
     leftPanel.innerHTML = `
       <div class="panel-header">Presets</div>
       <div class="panel-content presets-panel-mount"></div>
@@ -147,6 +147,12 @@ export class App {
     // Viewport: WebGL canvas container
     const viewportDiv = document.createElement('div');
     viewportDiv.className = 'viewport-container';
+    
+    // Tap on viewport to close slide-out panels on mobile
+    viewportDiv.addEventListener('pointerdown', () => {
+      leftPanel.classList.remove('mobile-open');
+      rightPanel.classList.remove('mobile-open');
+    });
     workspace.appendChild(viewportDiv);
 
     // Right Panel: Adjustments accordion
@@ -234,6 +240,36 @@ export class App {
     this.exportPanel = new ExportPanel(exportSec, (format, quality, scale) => {
       this.exportImage(format, quality, scale);
     });
+
+    // 3. Create Mobile Footer Bar (only visible on mobile screens via CSS)
+    const mobileFooter = document.createElement('div');
+    mobileFooter.className = 'editor-footer-mobile';
+    
+    const presetsBtn = document.createElement('button');
+    presetsBtn.className = 'btn btn-ghost flex-row gap-sm';
+    presetsBtn.style.flex = '1';
+    presetsBtn.style.justifyContent = 'center';
+    presetsBtn.innerHTML = '📁 Presets';
+    presetsBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      leftPanel.classList.toggle('mobile-open');
+      rightPanel.classList.remove('mobile-open');
+    });
+    
+    const adjustBtn = document.createElement('button');
+    adjustBtn.className = 'btn btn-ghost flex-row gap-sm';
+    adjustBtn.style.flex = '1';
+    adjustBtn.style.justifyContent = 'center';
+    adjustBtn.innerHTML = '🎛️ Adjustments';
+    adjustBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      rightPanel.classList.toggle('mobile-open');
+      leftPanel.classList.remove('mobile-open');
+    });
+    
+    mobileFooter.appendChild(presetsBtn);
+    mobileFooter.appendChild(adjustBtn);
+    container.appendChild(mobileFooter);
 
     // Show loading spinner
     Toast.info('Loading high-resolution image...');

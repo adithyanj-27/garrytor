@@ -190,3 +190,97 @@ canvas#webgl-canvas {
   from { opacity: 0; transform: scale(0.98); }
   to { opacity: 1; transform: scale(1); }
 }
+
+/* Mobile & Tablet Responsiveness Overrides */
+.editor-footer-mobile {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .editor-container {
+    grid-template-rows: var(--header-height) 1fr 48px;
+  }
+  
+  .editor-footer-mobile {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    height: 48px;
+    background-color: var(--bg-secondary);
+    border-top: 1px solid var(--border-color);
+    z-index: 10;
+  }
+
+  .editor-footer-mobile button {
+    height: 100%;
+    border-radius: 0 !important;
+    border: none !important;
+  }
+
+  .editor-footer-mobile button:first-child {
+    border-right: 1px solid var(--border-color) !important;
+  }
+  
+  .editor-workspace {
+    grid-template-columns: 1fr !important;
+    position: relative;
+  }
+  
+  .editor-panel {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 300px;
+    max-width: 85%;
+    z-index: 90;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 0 25px rgba(0,0,0,0.6);
+  }
+  
+  .editor-panel.left {
+    left: 0;
+    transform: translateX(-100%);
+    border-right: 1px solid var(--border-color);
+  }
+  
+  .editor-panel.right {
+    right: 0;
+    transform: translateX(100%);
+    border-left: 1px solid var(--border-color);
+  }
+  
+  .editor-panel.mobile-open {
+    transform: translateX(0) !important;
+  }
+  
+  /* Hide toolbar center section on mobile to save space */
+  .editor-container .dashboard-header > div:nth-child(2) {
+    display: none !important;
+  }
+  
+  /* Hide simple/advanced switch in toolbar right section */
+  .toggle-mode-container {
+    display: none !important;
+  }
+  
+  .dashboard-header {
+    padding: 0 var(--spacing-md) !important;
+  }
+  
+  .dashboard-grid {
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)) !important;
+    gap: var(--spacing-md) !important;
+    margin-top: var(--spacing-md) !important;
+  }
+  
+  .dashboard-content {
+    padding: var(--spacing-md) !important;
+  }
+  
+  /* Make modal sizing fit mobile */
+  .modal-card {
+    width: 92% !important;
+    max-width: 420px !important;
+    padding: var(--spacing-lg) !important;
+  }
+}
