@@ -202,6 +202,31 @@ export class CurvesPanel {
   onPointerDown(e) {
     const [x, y] = this._getEventCoords(e);
     const points = this.getPoints();
+
+    // Support double-tap to delete points on touch screens
+    const now = Date.now();
+    const isDoubleTap = (now - (this.lastTapTime || 0) < 300);
+    this.lastTapTime = now;
+
+    if (isDoubleTap) {
+      let clickedIdx = -1;
+      for (let i = 0; i < points.length; i++) {
+        const d = Math.hypot(points[i][0] - x, points[i][1] - y);
+        if (d < 8) {
+          clickedIdx = i;
+          break;
+        }
+      }
+      if (clickedIdx > 0 && clickedIdx < points.length - 1) {
+        const updated = [...points];
+        updated.splice(clickedIdx, 1);
+        this.setPoints(updated);
+        this.draggedPointIdx = -1;
+        this.activePointIdx = -1;
+        this.draw();
+        return;
+      }
+    }
     
     // Find if clicked near an existing control point (within 8 pixels)
     let foundIdx = -1;

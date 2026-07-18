@@ -35,6 +35,7 @@ export class Toolbar {
     leftSec.appendChild(backBtn);
 
     const title = document.createElement('span');
+    title.className = 'toolbar-title';
     title.style.fontSize = 'var(--font-size-md)';
     title.style.fontWeight = '600';
     title.textContent = this.imageName;
@@ -79,7 +80,7 @@ export class Toolbar {
 
     // Before/After comparison toggle
     const splitBtn = document.createElement('button');
-    splitBtn.className = 'btn btn-ghost';
+    splitBtn.className = 'btn btn-ghost split-compare-btn';
     splitBtn.innerHTML = '🌓 Split Compare';
     splitBtn.title = 'Before / After Comparison';
     splitBtn.addEventListener('click', () => {
@@ -97,7 +98,7 @@ export class Toolbar {
 
     // Zoom shortcuts
     const zoomGroup = document.createElement('div');
-    zoomGroup.className = 'flex-row';
+    zoomGroup.className = 'flex-row zoom-btn-group';
     zoomGroup.style.border = '1px solid var(--border-color)';
     zoomGroup.style.borderRadius = 'var(--radius-sm)';
     zoomGroup.style.overflow = 'hidden';

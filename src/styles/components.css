@@ -512,3 +512,31 @@ canvas.curves-canvas {
   border-color: var(--accent-color);
   box-shadow: 0 0 0 1px var(--accent-glow);
 }
+
+/* Touch & Mobile overrides for components */
+@media (max-width: 768px) {
+  /* Increase range slider target size for fingers */
+  input[type="range"].custom-slider::-webkit-slider-thumb {
+    width: 20px !important;
+    height: 20px !important;
+  }
+  
+  /* Prevent toast notifications from overlapping bottom nav bar */
+  .toast-container {
+    bottom: calc(70px + env(safe-area-inset-bottom)) !important;
+    right: var(--spacing-md) !important;
+    left: var(--spacing-md) !important;
+  }
+  
+  .toast {
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+
+  /* Make modal headers, bodies, and footers fit small screens */
+  .modal-header,
+  .modal-body,
+  .modal-footer {
+    padding: var(--spacing-md) !important;
+  }
+}

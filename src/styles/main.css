@@ -193,6 +193,22 @@ canvas#webgl-canvas {
   to { opacity: 1; transform: scale(1); }
 }
 
+/* Prevent touch scroll conflicts on viewport and interactive canvases */
+.viewport-container,
+canvas#webgl-canvas,
+canvas#overlay-canvas,
+canvas.curves-canvas {
+  touch-action: none;
+}
+
+/* Gracefully handle long image names in toolbar */
+.toolbar-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 160px;
+}
+
 /* Mobile & Tablet Responsiveness Overrides */
 .editor-footer-mobile {
   display: none;
@@ -203,10 +219,11 @@ canvas#webgl-canvas {
     display: flex;
     align-items: center;
     justify-content: space-around;
-    height: 56px;
+    height: calc(56px + env(safe-area-inset-bottom));
+    padding-bottom: env(safe-area-inset-bottom);
     background-color: var(--bg-secondary);
     border-top: 1px solid var(--border-color);
-    z-index: 10;
+    z-index: 100; /* Stays on top of slide-out drawers */
   }
 
   .editor-footer-mobile button {
@@ -227,7 +244,8 @@ canvas#webgl-canvas {
   .editor-panel {
     position: absolute;
     top: 0;
-    bottom: 0;
+    /* Drawers end above bottom nav bar so they don't cover it */
+    bottom: calc(56px + env(safe-area-inset-bottom)) !important;
     width: 300px;
     max-width: 85%;
     z-index: 90;
@@ -251,8 +269,9 @@ canvas#webgl-canvas {
     transform: translateX(0) !important;
   }
   
-  /* Hide toolbar center section on mobile to save space */
-  .editor-container .dashboard-header > div:nth-child(2) {
+  /* Hide non-essential toolbar buttons to prevent crowding */
+  .split-compare-btn,
+  .zoom-btn-group {
     display: none !important;
   }
   
@@ -279,6 +298,32 @@ canvas#webgl-canvas {
   .modal-card {
     width: 92% !important;
     max-width: 420px !important;
-    padding: var(--spacing-lg) !important;
+    padding: 0 !important; /* Managed by card section paddings */
+  }
+  
+  .toolbar-title {
+    max-width: 90px;
+  }
+}
+
+/* Custom hides for ultra compact mobile header displays */
+@media (max-width: 600px) {
+  .dashboard-welcome {
+    display: none !important;
+  }
+}
+
+@media (max-width: 480px) {
+  #pwa-install-btn .btn-text {
+    display: none !important;
+  }
+  #pwa-install-btn {
+    padding: var(--spacing-sm) !important;
+  }
+  .auth-container {
+    padding: var(--spacing-md) !important;
+  }
+  .auth-card {
+    padding: var(--spacing-xl) var(--spacing-lg) !important;
   }
 }

@@ -70,6 +70,17 @@ export class Slider {
     input.addEventListener('dblclick', () => this.reset());
     labelRow.addEventListener('dblclick', () => this.reset());
 
+    // Support double-tap to reset on touch screens
+    let lastTap = 0;
+    labelRow.addEventListener('touchstart', (e) => {
+      const now = Date.now();
+      if (now - lastTap < 300) {
+        this.reset();
+        e.preventDefault();
+      }
+      lastTap = now;
+    }, { passive: false });
+
     this.input = input;
     this.valDisplay = valDisplay;
 

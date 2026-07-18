@@ -52,6 +52,7 @@ export class Dashboard {
     rightGroup.className = 'flex-row gap-md';
 
     const welcome = document.createElement('span');
+    welcome.className = 'dashboard-welcome';
     welcome.style.fontSize = 'var(--font-size-sm)';
     welcome.style.color = 'var(--text-secondary)';
     rightGroup.appendChild(welcome);
@@ -96,7 +97,7 @@ export class Dashboard {
         <polyline points="7 10 12 15 17 10"/>
         <line x1="12" y1="15" x2="12" y2="3"/>
       </svg>
-      Install App
+      <span class="btn-text">Install App</span>
     `;
     installBtn.addEventListener('click', () => {
       if (window.triggerPWAInstall) window.triggerPWAInstall();
@@ -145,11 +146,14 @@ export class Dashboard {
     dropzone.style.textAlign = 'center';
     dropzone.style.color = 'var(--text-secondary)';
     dropzone.style.transition = 'border-color 0.2s';
+    dropzone.style.cursor = 'pointer';
     dropzone.innerHTML = `
       <div style="font-size: 24px; margin-bottom: 8px;">📷</div>
       <div style="font-size: var(--font-size-sm); font-weight: 600; color: var(--text-primary);">Drag & drop image here</div>
       <div style="font-size: var(--font-size-xs); margin-top: 4px;">Supports JPG, PNG, WebP or RAW up to 30MB</div>
     `;
+    
+    dropzone.addEventListener('click', () => fileInput.click());
     
     // Drag-drop events
     dropzone.addEventListener('dragover', (e) => {
