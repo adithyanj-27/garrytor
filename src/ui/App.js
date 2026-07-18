@@ -48,9 +48,19 @@ export class App {
     this.currentProject = null;
     this.lastHealMapPngData = null;
 
+    this._isRouting = false;
+
     // Listen for Supabase Authentication state updates
     onAuthStateChange((event, session) => {
+      const prevUserId = this.currentUser ? this.currentUser.id : null;
       this.currentUser = session ? session.user : GUEST_USER;
+      const newUserId = this.currentUser ? this.currentUser.id : null;
+      
+      // If a real user just signed in (not guest), redirect to dashboard
+      if (event === 'SIGNED_IN' && newUserId && newUserId !== 'guest' && prevUserId !== newUserId) {
+        window.location.hash = '#/dashboard';
+      }
+      
       this.route();
     });
 
@@ -63,6 +73,10 @@ export class App {
 
   // Session routing shell
   route() {
+    // Re-entrancy guard: prevent double-renders
+    if (this._isRouting) return;
+    this._isRouting = true;
+    setTimeout(() => { this._isRouting = false; }, 50);
     // Clean up active session window event listeners to avoid leaks and duplications
     if (this.viewport) {
       try { this.viewport.destroy(); } catch (e) {}

@@ -14,7 +14,7 @@ const triggerMockAuthChange = (event, session) => {
 
 export const signUpWithEmail = async (email, password, displayName) => {
   if (!isConfigured()) {
-    mockUser = { id: 'mock-uid-123', email, user_metadata: { display_name: displayName } };
+    mockUser = { id: `mock-${Date.now()}`, email, user_metadata: { display_name: displayName } };
     localStorage.setItem('garrytor_mock_user', JSON.stringify(mockUser));
     triggerMockAuthChange('SIGNED_IN', { user: mockUser });
     return { data: { user: mockUser }, error: null };
@@ -32,8 +32,7 @@ export const signUpWithEmail = async (email, password, displayName) => {
 
 export const signInWithEmail = async (email, password) => {
   if (!isConfigured()) {
-    // Basic verification for testing
-    mockUser = { id: 'mock-uid-123', email, user_metadata: { display_name: 'Garry Developer' } };
+    mockUser = { id: `mock-${Date.now()}`, email, user_metadata: { display_name: email.split('@')[0] } };
     localStorage.setItem('garrytor_mock_user', JSON.stringify(mockUser));
     triggerMockAuthChange('SIGNED_IN', { user: mockUser });
     return { data: { user: mockUser }, error: null };
@@ -48,19 +47,19 @@ export const signInWithEmail = async (email, password) => {
 
 export const signInWithGoogle = async () => {
   if (!isConfigured()) {
-    mockUser = { id: 'mock-uid-123', email: 'developer@garrytor.com', user_metadata: { display_name: 'Garry Developer' } };
-    localStorage.setItem('garrytor_mock_user', JSON.stringify(mockUser));
-    triggerMockAuthChange('SIGNED_IN', { user: mockUser });
-    return { data: { user: mockUser }, error: null };
+    // Mock mode: show a clear error instead of faking a login
+    return { data: null, error: new Error('Google Sign-In requires Supabase to be configured. Please use email/password or configure your .env file.') };
   }
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: window.location.origin
+      redirectTo: window.location.origin + '/#/dashboard'
     }
   });
-  return { data, error };
+  // OAuth triggers a full browser redirect — do NOT call onLoginSuccess here.
+  // The session will be picked up by onAuthStateChange after the redirect back.
+  return { data, error, isRedirect: true };
 };
 
 export const signOut = async () => {
@@ -110,4 +109,11 @@ export const getCurrentUser = async () => {
   const { data: { user }, error } = await supabase.auth.getUser();
   if (error) return null;
   return user;
+};
+
+// Helper to extract display name from any auth provider's user_metadata
+export const getUserDisplayName = (user) => {
+  if (!user) return 'User';
+  const meta = user.user_metadata || {};
+  return meta.display_name || meta.full_name || meta.name || meta.preferred_username || (user.email ? user.email.split('@')[0] : 'User');
 };

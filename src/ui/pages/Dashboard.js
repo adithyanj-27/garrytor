@@ -1,6 +1,6 @@
 import { getProjects, createProject, deleteProject } from '../../supabase/database';
 import { uploadImage, uploadExport, getImageUrl, deleteImage } from '../../supabase/storage';
-import { signOut } from '../../supabase/auth';
+import { signOut, getUserDisplayName } from '../../supabase/auth';
 import { validateFile, loadImageElement, generateThumbnail, isRawFile } from '../../utils/ImageLoader';
 import { Toast } from '../components/Toast';
 
@@ -69,7 +69,7 @@ export class Dashboard {
       });
       rightGroup.appendChild(signinBtn);
     } else {
-      welcome.textContent = `Hello, ${this.user.user_metadata.display_name || this.user.email}`;
+      welcome.textContent = `Hello, ${getUserDisplayName(this.user)}`;
 
       const signoutBtn = document.createElement('button');
       signoutBtn.className = 'btn btn-ghost';
