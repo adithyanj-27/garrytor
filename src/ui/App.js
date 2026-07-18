@@ -56,8 +56,9 @@ export class App {
       this.currentUser = session ? session.user : GUEST_USER;
       const newUserId = this.currentUser ? this.currentUser.id : null;
       
-      // If a real user just signed in (not guest), redirect to dashboard
-      if (event === 'SIGNED_IN' && newUserId && newUserId !== 'guest' && prevUserId !== newUserId) {
+      // If a real user just signed in (not guest) from the login or landing page, redirect to dashboard
+      const isLoginOrRoot = window.location.hash === '#/login' || window.location.hash === '' || window.location.hash === '#';
+      if (event === 'SIGNED_IN' && newUserId && newUserId !== 'guest' && prevUserId !== newUserId && isLoginOrRoot) {
         window.location.hash = '#/dashboard';
       }
       
