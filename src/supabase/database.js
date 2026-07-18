@@ -28,6 +28,24 @@ export const getProjects = async (userId) => {
   return { data, error };
 };
 
+export const getProject = async (projectId, userId) => {
+  const isLocal = !isConfigured() || (projectId && projectId.toString().startsWith('proj-')) || userId === 'guest';
+  if (isLocal) {
+    const projects = getLocalProjects();
+    const proj = projects.find(p => p.id === projectId);
+    return { data: proj || null, error: proj ? null : new Error('Project not found') };
+  }
+
+  const { data, error } = await supabase
+    .from('projects')
+    .select('*')
+    .eq('id', projectId)
+    .eq('user_id', userId)
+    .single();
+
+  return { data, error };
+};
+
 export const createProject = async (userId, name, originalPath, thumbnailPath) => {
   const isGuest = userId === 'guest';
   const newProject = {

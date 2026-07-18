@@ -58,14 +58,19 @@ export class CurvesPanel {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
 
+    this._boundPointerUp = () => this.onPointerUp();
     // Add pointer events for dragging
     canvas.addEventListener('pointerdown', (e) => this.onPointerDown(e));
     canvas.addEventListener('pointermove', (e) => this.onPointerMove(e));
-    window.addEventListener('pointerup', () => this.onPointerUp());
+    window.addEventListener('pointerup', this._boundPointerUp);
     canvas.addEventListener('dblclick', (e) => this.onDoubleClick(e));
 
     this.container.appendChild(panel);
     this.draw();
+  }
+
+  destroy() {
+    window.removeEventListener('pointerup', this._boundPointerUp);
   }
 
   // Get curve control points for current active channel

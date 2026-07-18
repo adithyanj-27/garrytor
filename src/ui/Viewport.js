@@ -122,33 +122,52 @@ export class Viewport {
 
     this.container.appendChild(viewWrapper);
 
+    // Save bound listener references for explicit cleanup
+    this._boundPointerUp = () => this.onPointerUp();
+    this._boundKeyDown = (e) => this.onKeyDown(e);
+    this._boundKeyUp = (e) => this.onKeyUp(e);
+
     // Event Listeners for Panning & Zooming
     this.container.addEventListener('pointerdown', (e) => this.onPointerDown(e));
     this.container.addEventListener('pointermove', (e) => this.onPointerMove(e));
-    window.addEventListener('pointerup', () => this.onPointerUp());
+    window.addEventListener('pointerup', this._boundPointerUp);
     this.container.addEventListener('wheel', (e) => this.onWheel(e), { passive: false });
 
-    // Keyboard Spacebar listeners
-    window.addEventListener('keydown', (e) => {
-      if (e.code === 'Space') {
-        this.isSpacePressed = true;
-        this.container.style.cursor = 'grab';
-      }
-      if (e.code === 'KeyO' && !e.target.closest('input')) {
-        const state = this.editState.get();
-        this.editState.set('showOverlay', !state.showOverlay);
-        this.draw();
-      }
-    });
-    window.addEventListener('keyup', (e) => {
-      if (e.code === 'Space') {
-        this.isSpacePressed = false;
-        this.container.style.cursor = 'default';
-      }
-    });
+    // Keyboard Spacebar & Overlay shortcuts listeners
+    window.addEventListener('keydown', this._boundKeyDown);
+    window.addEventListener('keyup', this._boundKeyUp);
 
     // Prevent default context menu
     this.container.addEventListener('contextmenu', (e) => e.preventDefault());
+  }
+
+  onKeyDown(e) {
+    if (e.code === 'Space') {
+      this.isSpacePressed = true;
+      this.container.style.cursor = 'grab';
+    }
+    if (e.code === 'KeyO' && !e.target.closest('input')) {
+      const state = this.editState.get();
+      this.editState.set('showOverlay', !state.showOverlay);
+      this.draw();
+    }
+  }
+
+  onKeyUp(e) {
+    if (e.code === 'Space') {
+      this.isSpacePressed = false;
+      this.container.style.cursor = 'default';
+    }
+  }
+
+  destroy() {
+    window.removeEventListener('pointerup', this._boundPointerUp);
+    window.removeEventListener('keydown', this._boundKeyDown);
+    window.removeEventListener('keyup', this._boundKeyUp);
+    
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect();
+    }
   }
 
   setMaskEditingMode(maskId) {

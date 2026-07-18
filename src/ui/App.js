@@ -1,7 +1,7 @@
 import { WebGLRenderer } from '../engine/WebGLRenderer';
 import { EditState } from '../state/EditState';
 import { HistoryManager } from '../state/HistoryManager';
-import { updateProjectState } from '../supabase/database';
+import { updateProjectState, getProject } from '../supabase/database';
 import { getImageUrl, uploadExport } from '../supabase/storage';
 import { onAuthStateChange } from '../supabase/auth';
 import { loadImageElement, generateThumbnail } from '../utils/ImageLoader';
@@ -56,10 +56,23 @@ export class App {
 
     // Register global hotkey shortcuts
     this.initKeyboardShortcuts();
+
+    // Listen for hash routing updates
+    window.addEventListener('hashchange', () => this.route());
   }
 
   // Session routing shell
   route() {
+    // Clean up active session window event listeners to avoid leaks and duplications
+    if (this.viewport) {
+      try { this.viewport.destroy(); } catch (e) {}
+      this.viewport = null;
+    }
+    if (this.curvesPanel) {
+      try { this.curvesPanel.destroy(); } catch (e) {}
+      this.curvesPanel = null;
+    }
+
     this.root.innerHTML = '';
     
     // Clear save timer on routing changes
@@ -85,14 +98,24 @@ export class App {
     }
 
     if (hash.startsWith('#/edit/')) {
-      // 2. Mount Editor workspace if project is selected
       const projId = hash.replace('#/edit/', '');
-      if (this.currentProject && this.currentProject.id === projId) {
+      if (this.currentProject && this.currentProject.id.toString() === projId.toString()) {
         this.mountEditor();
       } else {
-        // Fallback if reloaded directly: go back to dashboard
-        window.location.hash = '#/dashboard';
-        this.mountDashboard();
+        // Fetch project from database/localStorage on reload
+        getProject(projId, this.currentUser.id).then(({ data, error }) => {
+          if (data && !error) {
+            this.currentProject = data;
+            this.mountEditor();
+          } else {
+            window.location.hash = '#/dashboard';
+            this.route();
+          }
+        }).catch(err => {
+          console.error(err);
+          window.location.hash = '#/dashboard';
+          this.route();
+        });
       }
     } else {
       // 3. Mount Dashboard Library
@@ -193,7 +216,8 @@ export class App {
     const healingBlurSec = this._createAccordionSection(rightScroll, 'Healing & Blur 🧹🔥', false);
     const exportSec = this._createAccordionSection(rightScroll, 'Export settings', false);
 
-    // Instantiate and connect WebGL Renderer
+    // Instantiate and connect a fresh WebGL Renderer for this session
+    this.renderer = new WebGLRenderer();
     this.viewport = new Viewport(viewportDiv, this.renderer, this.editState);
     this.renderer.init(this.viewport.canvas);
 
