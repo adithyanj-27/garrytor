@@ -91,17 +91,19 @@ body {
 
 /* Editor Workspace Layout */
 .editor-container {
-  display: grid;
-  grid-template-rows: var(--header-height) 1fr;
-  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  width: 100vw;
   overflow: hidden;
   background-color: var(--bg-primary);
 }
 
 .editor-workspace {
+  flex: 1;
+  min-height: 0;
   display: grid;
   grid-template-columns: var(--left-panel-width) 1fr var(--sidebar-width);
-  height: 100%;
   overflow: hidden;
 }
 
@@ -197,15 +199,11 @@ canvas#webgl-canvas {
 }
 
 @media (max-width: 768px) {
-  .editor-container {
-    grid-template-rows: var(--header-height) 1fr 48px;
-  }
-  
   .editor-footer-mobile {
     display: flex;
     align-items: center;
     justify-content: space-around;
-    height: 48px;
+    height: 56px;
     background-color: var(--bg-secondary);
     border-top: 1px solid var(--border-color);
     z-index: 10;
