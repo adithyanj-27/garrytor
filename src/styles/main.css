@@ -314,12 +314,6 @@ canvas.curves-canvas {
 }
 
 @media (max-width: 480px) {
-  #pwa-install-btn .btn-text {
-    display: none !important;
-  }
-  #pwa-install-btn {
-    padding: var(--spacing-sm) !important;
-  }
   .auth-container {
     padding: var(--spacing-md) !important;
   }
