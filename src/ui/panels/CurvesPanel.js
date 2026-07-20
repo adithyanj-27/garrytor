@@ -69,9 +69,7 @@ export class CurvesPanel {
     this.draw();
   }
 
-  destroy() {
-    window.removeEventListener('pointerup', this._boundPointerUp);
-  }
+  // Cleanup is handled in the unified destroy() method at the bottom of this class
 
   // Get curve control points for current active channel
   getPoints() {
@@ -319,6 +317,7 @@ export class CurvesPanel {
   }
 
   destroy() {
+    window.removeEventListener('pointerup', this._boundPointerUp);
     this.unsubscribe();
   }
 }

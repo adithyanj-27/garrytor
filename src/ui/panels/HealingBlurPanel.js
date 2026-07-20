@@ -86,7 +86,9 @@ export class HealingBlurPanel {
           hCtx.clearRect(0, 0, this.viewport.healMapCanvas.width, this.viewport.healMapCanvas.height);
         }
         // Destroy texture
-        this.viewport.renderer.textures.destroyTexture('healMap');
+        if (this.viewport.renderer && this.viewport.renderer.textures) {
+          this.viewport.renderer.textures.destroyTexture('healMap');
+        }
         this.editState.set('healMapPngData', null);
         this.viewport.draw();
         Toast.success('Healing map reset.');

@@ -359,45 +359,76 @@ export class MaskingPanel {
     const activeMask = state.masks.find(m => m.id === state.activeMaskId);
     if (!activeMask) {
       this.settingsContainer.style.display = 'none';
+      this._renderedMaskId = null;
       return;
     }
 
-    this.settingsContainer.innerHTML = '';
+    // Only rebuild the settings DOM if the active mask has changed
+    // This prevents tearing down slider DOM mid-drag
+    if (this._renderedMaskId !== activeMask.id) {
+      this._renderedMaskId = activeMask.id;
+      this.settingsContainer.innerHTML = '';
     
-    const settingsHeader = document.createElement('div');
-    settingsHeader.className = 'flex-between align-center';
-    settingsHeader.style.marginBottom = '4px';
-    
-    const settingsTitle = document.createElement('span');
-    settingsTitle.style.fontSize = 'var(--font-size-xs)';
-    settingsTitle.style.color = 'var(--text-secondary)';
-    settingsTitle.style.fontWeight = '600';
-    settingsTitle.textContent = `MASK ADJUSTMENTS`;
-    settingsHeader.appendChild(settingsTitle);
-    
-    const resetBtn = document.createElement('button');
-    resetBtn.className = 'btn btn-ghost';
-    resetBtn.style.fontSize = 'var(--font-size-xs)';
-    resetBtn.style.padding = '2px 6px';
-    resetBtn.textContent = 'Reset';
-    resetBtn.addEventListener('click', () => {
-      const updated = state.masks.map(m => {
-        if (m.id === activeMask.id) {
-          const defaultSettings = {
-            exposure: 0, contrast: 0, highlights: 0, shadows: 0,
-            whites: 0, blacks: 0, temperature: 0, tint: 0, saturation: 0, clarity: 0
-          };
-          return { ...m, settings: defaultSettings };
-        }
-        return m;
+      const settingsHeader = document.createElement('div');
+      settingsHeader.className = 'flex-between align-center';
+      settingsHeader.style.marginBottom = '4px';
+      
+      const settingsTitle = document.createElement('span');
+      settingsTitle.style.fontSize = 'var(--font-size-xs)';
+      settingsTitle.style.color = 'var(--text-secondary)';
+      settingsTitle.style.fontWeight = '600';
+      settingsTitle.textContent = `MASK ADJUSTMENTS`;
+      settingsHeader.appendChild(settingsTitle);
+      
+      const resetBtn = document.createElement('button');
+      resetBtn.className = 'btn btn-ghost';
+      resetBtn.style.fontSize = 'var(--font-size-xs)';
+      resetBtn.style.padding = '2px 6px';
+      resetBtn.textContent = 'Reset';
+      resetBtn.addEventListener('click', () => {
+        const curState = this.editState.get();
+        const curMask = curState.masks.find(m => m.id === curState.activeMaskId);
+        if (!curMask) return;
+        const updated = curState.masks.map(m => {
+          if (m.id === curMask.id) {
+            const defaultSettings = {
+              exposure: 0, contrast: 0, highlights: 0, shadows: 0,
+              whites: 0, blacks: 0, temperature: 0, tint: 0, saturation: 0, clarity: 0
+            };
+            return { ...m, settings: defaultSettings };
+          }
+          return m;
+        });
+        this.editState.set('masks', updated);
+        this.viewport.draw();
       });
-      this.editState.set('masks', updated);
-      this.viewport.draw();
-    });
-    settingsHeader.appendChild(resetBtn);
-    this.settingsContainer.appendChild(settingsHeader);
+      settingsHeader.appendChild(resetBtn);
+      this.settingsContainer.appendChild(settingsHeader);
 
-    // Sync values and append slider elements
+      this.settingsContainer.appendChild(this.sliders.exposure.element);
+      this.settingsContainer.appendChild(this.sliders.contrast.element);
+      this.settingsContainer.appendChild(this.sliders.temperature.element);
+      this.settingsContainer.appendChild(this.sliders.tint.element);
+      this.settingsContainer.appendChild(this.sliders.saturation.element);
+      this.settingsContainer.appendChild(this.sliders.clarity.element);
+
+      // Brush parameter sliders (Brush specific)
+      if (activeMask.type === 'brush') {
+        const brushTitle = document.createElement('div');
+        brushTitle.style.fontSize = 'var(--font-size-xs)';
+        brushTitle.style.color = 'var(--text-secondary)';
+        brushTitle.style.fontWeight = '600';
+        brushTitle.style.marginTop = '8px';
+        brushTitle.textContent = `BRUSH SETTINGS`;
+        this.settingsContainer.appendChild(brushTitle);
+
+        this.settingsContainer.appendChild(this.sliders.brushSize.element);
+        this.settingsContainer.appendChild(this.sliders.brushFeather.element);
+      }
+    }
+
+    // Always sync slider values (cheap, no DOM teardown)
+    this.settingsContainer.style.display = 'flex';
     const s = activeMask.settings;
     this.sliders.exposure.setValue(s.exposure);
     this.sliders.contrast.setValue(s.contrast);
@@ -405,29 +436,10 @@ export class MaskingPanel {
     this.sliders.tint.setValue(s.tint);
     this.sliders.saturation.setValue(s.saturation);
     this.sliders.clarity.setValue(s.clarity);
-    
-    this.settingsContainer.appendChild(this.sliders.exposure.element);
-    this.settingsContainer.appendChild(this.sliders.contrast.element);
-    this.settingsContainer.appendChild(this.sliders.temperature.element);
-    this.settingsContainer.appendChild(this.sliders.tint.element);
-    this.settingsContainer.appendChild(this.sliders.saturation.element);
-    this.settingsContainer.appendChild(this.sliders.clarity.element);
 
-    // Brush parameter sliders (Brush specific)
     if (activeMask.type === 'brush') {
-      const brushTitle = document.createElement('div');
-      brushTitle.style.fontSize = 'var(--font-size-xs)';
-      brushTitle.style.color = 'var(--text-secondary)';
-      brushTitle.style.fontWeight = '600';
-      brushTitle.style.marginTop = '8px';
-      brushTitle.textContent = `BRUSH SETTINGS`;
-      this.settingsContainer.appendChild(brushTitle);
-
       this.sliders.brushSize.setValue(activeMask.brushSize);
       this.sliders.brushFeather.setValue(activeMask.brushFeather);
-      
-      this.settingsContainer.appendChild(this.sliders.brushSize.element);
-      this.settingsContainer.appendChild(this.sliders.brushFeather.element);
     }
   }
 

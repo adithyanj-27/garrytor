@@ -88,12 +88,30 @@ export class App {
       this.curvesPanel = null;
     }
 
+    // Clear stacked EditState listeners to prevent exponential callbacks
+    this.editState.clearListeners();
+
     this.root.innerHTML = '';
     
-    // Clear save timer on routing changes
+    // Flush pending auto-save before navigating away to prevent data loss
     if (this.saveTimer) {
       clearTimeout(this.saveTimer);
       this.saveTimer = null;
+      // Synchronously fire the save if there's a pending project
+      if (this.currentProject) {
+        const editStateJSON = this.editState.clone();
+        if (editStateJSON.masks) {
+          editStateJSON.masks.forEach(mask => {
+            if (mask.canvas) {
+              mask.pngData = mask.canvas.toDataURL('image/png');
+              delete mask.canvas;
+            }
+          });
+        }
+        updateProjectState(this.currentProject.id, editStateJSON).catch(err => {
+          console.error('Final save on route failed:', err);
+        });
+      }
     }
 
     const hash = window.location.hash;
@@ -215,6 +233,7 @@ export class App {
     rightPanel.appendChild(histogramContainer);
     
     this.histogram = new Histogram(histCanvas);
+    this.histogramData = this.histogram; // Initialize early so curves panel can reference it
 
     // Container for accordion modules
     const rightScroll = document.createElement('div');
@@ -483,7 +502,7 @@ export class App {
 
         // 2. Adjust output dimensions if scale is set (<1.0)
         let finalCanvas = canvas;
-        if (scale < 1.0) {
+        if (scale !== 1.0) {
           finalCanvas = document.createElement('canvas');
           finalCanvas.width = canvas.width * scale;
           finalCanvas.height = canvas.height * scale;
@@ -539,8 +558,9 @@ export class App {
     window.addEventListener('keydown', (e) => {
       // 1. Undo: Ctrl+Z
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !e.shiftKey) {
-        // Prevent default input action if focus is on form
-        if (document.activeElement.tagName === 'INPUT') return;
+        // Prevent default input action if focus is on form elements
+        const tag = document.activeElement.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || document.activeElement.isContentEditable) return;
         e.preventDefault();
         this.triggerUndo();
       }
@@ -550,7 +570,8 @@ export class App {
         (e.key.toLowerCase() === 'z' && e.shiftKey) || 
         e.key.toLowerCase() === 'y'
       )) {
-        if (document.activeElement.tagName === 'INPUT') return;
+        const redoTag = document.activeElement.tagName;
+        if (redoTag === 'INPUT' || redoTag === 'TEXTAREA' || document.activeElement.isContentEditable) return;
         e.preventDefault();
         this.triggerRedo();
       }

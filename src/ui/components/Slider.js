@@ -53,12 +53,6 @@ export class Slider {
     input.addEventListener('input', (e) => {
       let val = parseFloat(e.target.value);
       
-      // Snap to zero if close (within +/- 2 steps for fine tuning)
-      if (this.isBipolar && Math.abs(val) <= this.step * 2) {
-        val = 0;
-        input.value = 0;
-      }
-      
       this.value = val;
       valDisplay.textContent = this._formatValue(this.value);
       this.updateTrackFill();

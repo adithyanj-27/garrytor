@@ -41,6 +41,21 @@ export class WebGLRenderer {
   // Initialize WebGL context
   init(canvas) {
     this.canvas = canvas;
+
+    if (!this._contextListenersBound) {
+      this._contextListenersBound = true;
+      this.canvas.addEventListener('webglcontextlost', (e) => {
+        e.preventDefault();
+        console.warn('WebGL context lost');
+      }, false);
+      
+      this.canvas.addEventListener('webglcontextrestored', () => {
+        console.log('WebGL context restored');
+        this.init(this.canvas);
+        // We'd need the viewport to redraw, but we don't have a direct reference here.
+        // Usually the app level would listen, but this attempts to recover internal state.
+      }, false);
+    }
     this.gl = canvas.getContext('webgl2', {
       premultipliedAlpha: false,
       alpha: false,
@@ -196,11 +211,16 @@ export class WebGLRenderer {
       const pMaskAdj = this.shaders.maskAdjustments;
       pMaskAdj.use();
 
+      const currentMaskIds = new Set();
+
       for (const mask of state.masks) {
         if (!mask.canvas || mask.visible === false) continue;
 
+        const texKey = 'mask_' + mask.id;
+        currentMaskIds.add(texKey);
+
         // Upload/bind the mask pixels to WebGL texture
-        this.textures.createImageTexture('mask_' + mask.id, mask.canvas);
+        this.textures.createImageTexture(texKey, mask.canvas);
 
         this._bindFBO(currentOutputFBO);
         
@@ -210,7 +230,7 @@ export class WebGLRenderer {
         pMaskAdj.setInt('u_image', 0);
 
         // Bind mask texture to unit 1
-        this.textures.bind('mask_' + mask.id, 1);
+        this.textures.bind(texKey, 1);
         pMaskAdj.setInt('u_mask', 1);
 
         // Set mask settings uniforms
@@ -228,6 +248,20 @@ export class WebGLRenderer {
 
         this._drawQuad();
         swapPingPong();
+      }
+
+      // Free textures for masks that no longer exist
+      for (const key of this.textures.textures.keys()) {
+        if (key.startsWith('mask_') && !currentMaskIds.has(key)) {
+          this.textures.destroyTexture(key);
+        }
+      }
+    } else {
+      // Clean up all mask textures if there are no masks
+      for (const key of this.textures.textures.keys()) {
+        if (key.startsWith('mask_')) {
+          this.textures.destroyTexture(key);
+        }
       }
     }
 

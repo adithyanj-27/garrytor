@@ -65,10 +65,15 @@ void main() {
   float blackAdjustment = u_blacks / 100.0 * 0.5;
   color += color * blackAdjustment * blackWeight;
 
-  // 5. Contrast
-  float contrastFactor = (u_contrast + 100.0) / 100.0;
-  if (contrastFactor != 1.0) {
-    color = (color - 0.5) * contrastFactor + 0.5;
+  // 5. Contrast (S-shaped curve)
+  if (u_contrast != 0.0) {
+    float c = u_contrast / 100.0;
+    vec3 sCurve = color * color * (3.0 - 2.0 * color);
+    if (c > 0.0) {
+      color = mix(color, sCurve, c);
+    } else {
+      color = mix(color, vec3(0.5), -c);
+    }
   }
 
   // 6. Clarity

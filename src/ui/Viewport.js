@@ -126,12 +126,15 @@ export class Viewport {
     this._boundPointerUp = () => this.onPointerUp();
     this._boundKeyDown = (e) => this.onKeyDown(e);
     this._boundKeyUp = (e) => this.onKeyUp(e);
+    this._boundPointerDown = (e) => this.onPointerDown(e);
+    this._boundPointerMove = (e) => this.onPointerMove(e);
+    this._boundWheel = (e) => this.onWheel(e);
 
     // Event Listeners for Panning & Zooming
-    this.container.addEventListener('pointerdown', (e) => this.onPointerDown(e));
-    this.container.addEventListener('pointermove', (e) => this.onPointerMove(e));
+    this.container.addEventListener('pointerdown', this._boundPointerDown);
+    this.container.addEventListener('pointermove', this._boundPointerMove);
     window.addEventListener('pointerup', this._boundPointerUp);
-    this.container.addEventListener('wheel', (e) => this.onWheel(e), { passive: false });
+    this.container.addEventListener('wheel', this._boundWheel, { passive: false });
 
     // Keyboard Spacebar & Overlay shortcuts listeners
     window.addEventListener('keydown', this._boundKeyDown);
@@ -164,9 +167,21 @@ export class Viewport {
     window.removeEventListener('pointerup', this._boundPointerUp);
     window.removeEventListener('keydown', this._boundKeyDown);
     window.removeEventListener('keyup', this._boundKeyUp);
+
+    if (this.container) {
+      this.container.removeEventListener('pointerdown', this._boundPointerDown);
+      this.container.removeEventListener('pointermove', this._boundPointerMove);
+      this.container.removeEventListener('wheel', this._boundWheel);
+    }
     
     if (this.resizeObserver) {
       this.resizeObserver.disconnect();
+    }
+
+    // Terminate healing web worker to prevent orphaned threads
+    if (this.healingWorker) {
+      this.healingWorker.terminate();
+      this.healingWorker = null;
     }
   }
 

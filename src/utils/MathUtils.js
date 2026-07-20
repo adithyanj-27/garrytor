@@ -47,12 +47,12 @@ export const getCurveValues = (points) => {
       continue;
     }
 
-    // Normalised t within segment
-    const t = (i - p1[0]) / (p2[0] - p1[0]);
-
     // Use Catmull-Rom if possible, else linear
     const p0 = idx > 0 ? points[idx - 1] : p1;
     const p3 = idx < points.length - 2 ? points[idx + 2] : p2;
+
+    // Normalised t within segment based on x
+    const t = (i - p1[0]) / (p2[0] - p1[0]);
 
     // Catmull-Rom requires single coordinates
     const y = catmullRom(p0[1], p1[1], p2[1], p3[1], t);

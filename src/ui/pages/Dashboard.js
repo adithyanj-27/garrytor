@@ -122,11 +122,12 @@ export class Dashboard {
     titleRow.appendChild(title);
 
     // File input (hidden)
-    const fileInput = document.createElement('input');
-    fileInput.type = 'file';
-    fileInput.accept = 'image/*';
-    fileInput.style.display = 'none';
-    fileInput.addEventListener('change', (e) => this.handleUpload(e.target.files[0]));
+    this.fileInput = document.createElement('input');
+    this.fileInput.type = 'file';
+    this.fileInput.accept = 'image/*';
+    this.fileInput.style.display = 'none';
+    this.fileInput.addEventListener('change', (e) => this.handleUpload(e.target.files[0]));
+    const fileInput = this.fileInput;
     content.appendChild(fileInput);
 
     const uploadBtn = document.createElement('button');
@@ -329,11 +330,14 @@ export class Dashboard {
   // Orchestrate file upload and database mapping
   async handleUpload(file) {
     if (!file) return;
+    if (this.isUploading) return;
+    this.isUploading = true;
 
     // Validate size and format
     const { valid, error } = validateFile(file);
     if (!valid) {
       Toast.error(error);
+      this.isUploading = false;
       return;
     }
 
@@ -417,6 +421,8 @@ export class Dashboard {
       
       setTimeout(() => {
         this.progressBox.style.display = 'none';
+        this.isUploading = false;
+        if (this.fileInput) this.fileInput.value = '';
         this.loadProjectGrid();
         
         // Auto open new project in editor
@@ -426,6 +432,8 @@ export class Dashboard {
     } catch (err) {
       console.error(err);
       this.progressBox.style.display = 'none';
+      this.isUploading = false;
+      if (this.fileInput) this.fileInput.value = '';
       Toast.error('Upload failed: ' + err.message);
     }
   }

@@ -67,6 +67,11 @@ export class EditState {
     return () => this.listeners.delete(callback);
   }
 
+  // Remove all listeners (called on route change to prevent stacking)
+  clearListeners() {
+    this.listeners.clear();
+  }
+
   // Notify all listeners
   _notify() {
     this.listeners.forEach(cb => cb(this.state));
@@ -126,20 +131,19 @@ export class EditState {
   clone() {
     const cloned = JSON.parse(JSON.stringify(this.state));
     if (this.state.masks) {
-      cloned.masks = this.state.masks.map((mask, i) => {
-        const clonedMask = { ...mask };
-        const originalCanvas = this.state.masks[i].canvas;
+      cloned.masks = cloned.masks.map((mask, i) => {
+        const originalCanvas = this.state.masks[i] && this.state.masks[i].canvas;
         if (originalCanvas) {
           const newCanvas = document.createElement('canvas');
           newCanvas.width = originalCanvas.width;
           newCanvas.height = originalCanvas.height;
           const ctx = newCanvas.getContext('2d');
           ctx.drawImage(originalCanvas, 0, 0);
-          clonedMask.canvas = newCanvas;
+          mask.canvas = newCanvas;
         } else {
-          clonedMask.canvas = null;
+          mask.canvas = null;
         }
-        return clonedMask;
+        return mask;
       });
     }
     return cloned;
