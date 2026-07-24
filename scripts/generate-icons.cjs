@@ -22,7 +22,7 @@ function writeChunk(type, data) {
   return Buffer.concat([len, typeBuf, data, crcBuf]);
 }
 
-function generateAperturePNG(size, isMaskable = false) {
+function generateAperturePNG(size, bgFillColor = null) {
   const width = size;
   const height = size;
   
@@ -32,8 +32,8 @@ function generateAperturePNG(size, isMaskable = false) {
   const cx = width / 2;
   const cy = height / 2;
 
-  // Maskable icons use smaller safe zone (60% of size)
-  const scale = isMaskable ? 0.75 : 1.0;
+  // Scale icon inside container
+  const scale = bgFillColor ? 0.75 : 0.85;
   const outerR = size * 0.44 * scale;
   const innerR = size * 0.40 * scale;
   const strokeW = Math.max(3, size * 0.05 * scale);
@@ -91,14 +91,13 @@ function generateAperturePNG(size, isMaskable = false) {
         rawData[idx + 2] = b;
         rawData[idx + 3] = a;
       } else {
-        if (isMaskable) {
-          // Dark theme background #0d0d0f for maskable icons
-          rawData[idx] = 13;
-          rawData[idx + 1] = 13;
-          rawData[idx + 2] = 15;
+        if (bgFillColor) {
+          rawData[idx] = bgFillColor.r;
+          rawData[idx + 1] = bgFillColor.g;
+          rawData[idx + 2] = bgFillColor.b;
           rawData[idx + 3] = 255;
         } else {
-          // 100% TRANSPARENT BACKGROUND FOR Standard ("purpose": "any") Icons
+          // 100% TRANSPARENT BACKGROUND - ZERO ALPHA
           rawData[idx] = 0;
           rawData[idx + 1] = 0;
           rawData[idx + 2] = 0;
@@ -128,16 +127,22 @@ function generateAperturePNG(size, isMaskable = false) {
 }
 
 const iconsDir = path.join(__dirname, '..', 'public', 'icons');
+const publicDir = path.join(__dirname, '..', 'public');
+
 if (!fs.existsSync(iconsDir)) {
   fs.mkdirSync(iconsDir, { recursive: true });
 }
 
-// Generate Standard Transparent Icons ("purpose": "any")
-fs.writeFileSync(path.join(iconsDir, 'icon-192.png'), generateAperturePNG(192, false));
-fs.writeFileSync(path.join(iconsDir, 'icon-512.png'), generateAperturePNG(512, false));
+// 1. Generate 100% Transparent PNG icons for all resolutions
+fs.writeFileSync(path.join(iconsDir, 'icon-192.png'), generateAperturePNG(192, null));
+fs.writeFileSync(path.join(iconsDir, 'icon-512.png'), generateAperturePNG(512, null));
 
-// Generate Dark Theme Maskable Icons ("purpose": "maskable")
-fs.writeFileSync(path.join(iconsDir, 'icon-maskable-192.png'), generateAperturePNG(192, true));
-fs.writeFileSync(path.join(iconsDir, 'icon-maskable-512.png'), generateAperturePNG(512, true));
+// 2. Generate Dark Theme #0d0d0f Maskable PNG icons
+const darkTheme = { r: 13, g: 13, b: 15 };
+fs.writeFileSync(path.join(iconsDir, 'icon-maskable-192.png'), generateAperturePNG(192, darkTheme));
+fs.writeFileSync(path.join(iconsDir, 'icon-maskable-512.png'), generateAperturePNG(512, darkTheme));
 
-console.log('Successfully generated transparent & dark theme PWA PNG icons!');
+// 3. Generate favicon.png as explicit fallback icon
+fs.writeFileSync(path.join(publicDir, 'favicon.png'), generateAperturePNG(64, null));
+
+console.log('Successfully generated transparent PNG icons!');
