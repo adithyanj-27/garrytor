@@ -23,7 +23,7 @@ export class Toolbar {
     this.container.innerHTML = '';
     this.container.className = 'dashboard-header'; // re-use header styling
 
-    // Left side: Back + Garrytor Logo/Name + Image Name Badge
+    // Left side: Back + Exact Home Screen Brand Logo
     const leftSec = document.createElement('div');
     leftSec.className = 'flex-row gap-sm align-center';
 
@@ -36,13 +36,20 @@ export class Toolbar {
     });
     leftSec.appendChild(backBtn);
 
-    // Brand Logo & Name
+    // Exact Home Screen Brand Logo & Name
     const brand = document.createElement('div');
-    brand.className = 'flex-row gap-xs align-center';
+    brand.className = 'auth-logo';
+    brand.style.fontSize = '20px';
     brand.style.cursor = 'pointer';
     brand.title = 'Back to Library';
     brand.innerHTML = `
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-color)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="url(#aperture-grad-tool)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 0 4px rgba(255, 140, 66, 0.45));">
+        <defs>
+          <linearGradient id="aperture-grad-tool" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#ff8c42" />
+            <stop offset="100%" stop-color="#ff3e55" />
+          </linearGradient>
+        </defs>
         <circle cx="12" cy="12" r="10"></circle>
         <line x1="14.31" y1="8" x2="20.05" y2="17.94"></line>
         <line x1="9.69" y1="8" x2="21.17" y2="8"></line>
@@ -51,43 +58,39 @@ export class Toolbar {
         <line x1="14.31" y1="16" x2="2.83" y2="16"></line>
         <line x1="16.62" y1="12" x2="10.88" y2="21.94"></line>
       </svg>
-      <span style="font-family: var(--font-family-logo); font-size: 18px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.02em;">Garrytor</span>
+      <span class="brand-glow">Garrytor</span>
     `;
     brand.addEventListener('click', () => {
       if (this.onBack) this.onBack();
     });
     leftSec.appendChild(brand);
 
-    // Separator
-    const sep = document.createElement('span');
-    sep.style.color = 'var(--border-color)';
-    sep.style.fontSize = '14px';
-    sep.textContent = '│';
-    leftSec.appendChild(sep);
+    this.container.appendChild(leftSec);
 
-    // Secondary Image Name Badge
+    // Center side: Photo Title Badge + Undo/Redo + Split Compare + Zoom
+    const centerSec = document.createElement('div');
+    centerSec.className = 'flex-row gap-md align-center';
+
+    // Image Name Badge shown in center toolbar
     const imgBadge = document.createElement('div');
-    imgBadge.className = 'toolbar-title-badge';
+    imgBadge.className = 'toolbar-title-badge flex-row gap-xs align-center';
     imgBadge.style.fontSize = 'var(--font-size-xs)';
     imgBadge.style.fontWeight = '500';
     imgBadge.style.color = 'var(--text-secondary)';
     imgBadge.style.backgroundColor = 'var(--bg-tertiary)';
     imgBadge.style.border = '1px solid var(--border-color)';
-    imgBadge.style.padding = '3px 8px';
+    imgBadge.style.padding = '4px 10px';
     imgBadge.style.borderRadius = 'var(--radius-xs)';
-    imgBadge.style.maxWidth = '180px';
+    imgBadge.style.maxWidth = '220px';
     imgBadge.style.overflow = 'hidden';
     imgBadge.style.textOverflow = 'ellipsis';
     imgBadge.style.whiteSpace = 'nowrap';
-    imgBadge.textContent = this.imageName;
+    imgBadge.innerHTML = `
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+      <span>${this.imageName}</span>
+    `;
     imgBadge.title = this.imageName;
-    leftSec.appendChild(imgBadge);
-
-    this.container.appendChild(leftSec);
-
-    // Center side: Undo/Redo + Split Compare + Zoom
-    const centerSec = document.createElement('div');
-    centerSec.className = 'flex-row gap-md';
+    centerSec.appendChild(imgBadge);
 
     // Undo/Redo Group
     const undoGroup = document.createElement('div');
