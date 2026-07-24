@@ -1,8 +1,11 @@
 import { Icons } from './components/Icons';
+import { ProfileModal } from './components/ProfileModal';
+import { getUserDisplayName } from '../supabase/auth';
 
 export class Toolbar {
   constructor(container, options = {}) {
     this.container = container;
+    this.currentUser = options.currentUser || null;
     this.imageName = options.imageName || 'Untitled Photo';
     this.onBack = options.onBack || null;
     this.onUndo = options.onUndo || null;
@@ -270,6 +273,30 @@ export class Toolbar {
       if (this.onExport) this.onExport();
     });
     rightSec.appendChild(exportBtn);
+
+    // Profile Avatar Button
+    if (this.currentUser) {
+      const displayName = getUserDisplayName(this.currentUser);
+      const initial = displayName.charAt(0).toUpperCase() || 'U';
+
+      const profileAvatarBtn = document.createElement('button');
+      profileAvatarBtn.className = 'btn btn-ghost btn-icon';
+      profileAvatarBtn.style.borderRadius = '50%';
+      profileAvatarBtn.style.background = 'linear-gradient(135deg, var(--accent-color) 0%, #ff3e55 100%)';
+      profileAvatarBtn.style.color = '#fff';
+      profileAvatarBtn.style.fontWeight = '700';
+      profileAvatarBtn.style.fontSize = '13px';
+      profileAvatarBtn.style.border = 'none';
+      profileAvatarBtn.style.boxShadow = '0 0 6px var(--accent-glow)';
+      profileAvatarBtn.textContent = initial;
+      profileAvatarBtn.title = `Profile Details (${displayName})`;
+      profileAvatarBtn.addEventListener('click', () => {
+        new ProfileModal(this.currentUser, {
+          onSignOut: () => window.location.hash = '#/dashboard'
+        }).open();
+      });
+      rightSec.appendChild(profileAvatarBtn);
+    }
 
     this.container.appendChild(rightSec);
   }

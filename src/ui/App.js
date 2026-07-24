@@ -283,6 +283,7 @@ export class App {
 
     // Instantiate Toolbar header
     this.toolbar = new Toolbar(toolbarDiv, {
+      currentUser: this.currentUser,
       imageName: proj.name,
       onBack: () => {
         window.location.hash = '#/dashboard';

@@ -4,6 +4,7 @@ import { signOut, getUserDisplayName } from '../../supabase/auth';
 import { validateFile, loadImageElement, generateThumbnail, isRawFile } from '../../utils/ImageLoader';
 import { Toast } from '../components/Toast';
 import { Icons } from '../components/Icons';
+import { ProfileModal } from '../components/ProfileModal';
 
 export class Dashboard {
   constructor(container, user, onSelectProject, onSignOut) {
@@ -28,7 +29,7 @@ export class Dashboard {
 
     const logo = document.createElement('div');
     logo.className = 'auth-logo';
-    logo.style.fontSize = '22px';
+    logo.style.fontSize = '20px';
     logo.innerHTML = `
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="url(#aperture-grad-dash)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 0 4px rgba(255, 140, 66, 0.45));">
         <defs>
@@ -50,39 +51,31 @@ export class Dashboard {
     header.appendChild(logo);
 
     const rightGroup = document.createElement('div');
-    rightGroup.className = 'flex-row gap-md';
+    rightGroup.className = 'flex-row gap-md align-center';
 
-    const welcome = document.createElement('span');
-    welcome.className = 'dashboard-welcome';
-    welcome.style.fontSize = 'var(--font-size-sm)';
-    welcome.style.color = 'var(--text-secondary)';
-    rightGroup.appendChild(welcome);
+    // Clickable User Profile Pill
+    const displayName = getUserDisplayName(this.user);
+    const initial = displayName.charAt(0).toUpperCase() || 'U';
 
-    if (this.user.isGuest) {
-      welcome.textContent = 'Guest Mode';
-      
-      const signinBtn = document.createElement('button');
-      signinBtn.className = 'btn btn-primary';
-      signinBtn.style.fontSize = 'var(--font-size-xs)';
-      signinBtn.style.padding = '4px 12px';
-      signinBtn.textContent = 'Sign In';
-      signinBtn.addEventListener('click', () => {
-        window.location.hash = '#/login';
-      });
-      rightGroup.appendChild(signinBtn);
-    } else {
-      welcome.textContent = `Hello, ${getUserDisplayName(this.user)}`;
-
-      const signoutBtn = document.createElement('button');
-      signoutBtn.className = 'btn btn-ghost';
-      signoutBtn.style.fontSize = 'var(--font-size-xs)';
-      signoutBtn.textContent = 'Sign Out';
-      signoutBtn.addEventListener('click', async () => {
-        await signOut();
-        if (this.onSignOut) this.onSignOut();
-      });
-      rightGroup.appendChild(signoutBtn);
-    }
+    const profilePill = document.createElement('div');
+    profilePill.className = 'profile-pill flex-row gap-xs align-center';
+    profilePill.style.cursor = 'pointer';
+    profilePill.style.padding = '4px 10px 4px 6px';
+    profilePill.style.backgroundColor = 'var(--bg-tertiary)';
+    profilePill.style.border = '1px solid var(--border-color)';
+    profilePill.style.borderRadius = '20px';
+    profilePill.style.fontSize = 'var(--font-size-xs)';
+    profilePill.style.fontWeight = '600';
+    profilePill.style.transition = 'all 0.2s';
+    profilePill.title = 'View Profile Details';
+    profilePill.innerHTML = `
+      <div style="width: 24px; height: 24px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-color) 0%, #ff3e55 100%); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px;">${initial}</div>
+      <span style="color: var(--text-primary);">${displayName}</span>
+    `;
+    profilePill.addEventListener('click', () => {
+      new ProfileModal(this.user, { onSignOut: this.onSignOut }).open();
+    });
+    rightGroup.appendChild(profilePill);
 
     // PWA Install Button
     const installBtn = document.createElement('button');
