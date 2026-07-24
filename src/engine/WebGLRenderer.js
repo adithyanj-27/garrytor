@@ -245,6 +245,8 @@ export class WebGLRenderer {
         pMaskAdj.setFloat('u_tint', s.tint || 0);
         pMaskAdj.setFloat('u_saturation', s.saturation || 0);
         pMaskAdj.setFloat('u_clarity', s.clarity || 0);
+        pMaskAdj.setFloat('u_inverted', mask.inverted ? 1.0 : 0.0);
+        pMaskAdj.setFloat('u_opacity', mask.opacity !== undefined ? mask.opacity / 100.0 : 1.0);
 
         this._drawQuad();
         swapPingPong();

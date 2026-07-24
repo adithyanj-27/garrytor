@@ -17,6 +17,8 @@ uniform float u_temperature;  // -100.0 to 100.0
 uniform float u_tint;         // -100.0 to 100.0
 uniform float u_saturation;   // -100.0 to 100.0
 uniform float u_clarity;      // -100.0 to 100.0
+uniform float u_inverted;     // 0.0 or 1.0
+uniform float u_opacity;      // 0.0 to 1.0
 
 float getLuminance(vec3 color) {
   return dot(color, vec3(0.299, 0.587, 0.114));
@@ -25,6 +27,11 @@ float getLuminance(vec3 color) {
 void main() {
   vec4 texColor = texture(u_image, v_texCoord);
   float maskVal = texture(u_mask, v_texCoord).r;
+
+  if (u_inverted > 0.5) {
+    maskVal = 1.0 - maskVal;
+  }
+  maskVal *= u_opacity;
 
   // If mask is completely black, pass through the color unmodified
   if (maskVal <= 0.0) {

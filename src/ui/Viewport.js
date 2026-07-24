@@ -554,6 +554,31 @@ export class Viewport {
           return;
         }
 
+        // Color Range, Luma Range, or Magic Wand sampling click
+        if (mask.type === 'colorRange' || mask.type === 'lumaRange' || mask.type === 'magicWand') {
+          if (mask.type === 'colorRange' || mask.type === 'lumaRange') {
+            const sampled = this.samplePixelColor(x, y);
+            if (sampled) {
+              if (mask.type === 'colorRange') {
+                mask.colorTarget = sampled;
+                this.generateColorRangeMask(mask);
+              } else {
+                const luma = Math.round((0.299 * sampled.r + 0.587 * sampled.g + 0.114 * sampled.b) / 255 * 100);
+                mask.lumaMin = Math.max(0, luma - 20);
+                mask.lumaMax = Math.min(100, luma + 20);
+                this.generateLumaRangeMask(mask);
+              }
+              this.editState._notify();
+              return;
+            }
+          } else if (mask.type === 'magicWand') {
+            mask.wandPoint = { x: x / this.imgW, y: y / this.imgH };
+            this.generateMagicWandMask(mask);
+            this.editState._notify();
+            return;
+          }
+        }
+
         // Linear or Radial gradient drag
         if (mask.type === 'linear' || mask.type === 'radial') {
           this.isDraggingGradient = true;
@@ -815,6 +840,278 @@ export class Viewport {
       ctx.arc(cx, cy, r, 0, Math.PI * 2);
       ctx.fill();
     }
+  }
+
+  samplePixelColor(x, y) {
+    if (!this.baseImageElement) return null;
+    const canvas = document.createElement('canvas');
+    canvas.width = this.imgW;
+    canvas.height = this.imgH;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    ctx.drawImage(this.baseImageElement, 0, 0);
+    const p = ctx.getImageData(Math.max(0, Math.min(this.imgW - 1, x)), Math.max(0, Math.min(this.imgH - 1, y)), 1, 1).data;
+    return { r: p[0], g: p[1], b: p[2] };
+  }
+
+  generateColorRangeMask(mask) {
+    const canvas = mask.canvas;
+    if (!canvas || !this.baseImageElement) return;
+
+    const w = canvas.width;
+    const h = canvas.height;
+    const ctx = canvas.getContext('2d');
+
+    if (!this._imgSampleCanvas) {
+      this._imgSampleCanvas = document.createElement('canvas');
+    }
+    this._imgSampleCanvas.width = w;
+    this._imgSampleCanvas.height = h;
+    const sCtx = this._imgSampleCanvas.getContext('2d', { willReadFrequently: true });
+    sCtx.drawImage(this.baseImageElement, 0, 0, w, h);
+    const pixels = sCtx.getImageData(0, 0, w, h).data;
+
+    const target = mask.colorTarget || { r: 128, g: 128, b: 128 };
+    const tolerance = (mask.colorTolerance !== undefined ? mask.colorTolerance : 30) / 100 * 255;
+
+    const maskImgData = ctx.createImageData(w, h);
+    const mPixels = maskImgData.data;
+
+    const tr = target.r;
+    const tg = target.g;
+    const tb = target.b;
+
+    for (let i = 0; i < pixels.length; i += 4) {
+      const r = pixels[i];
+      const g = pixels[i + 1];
+      const b = pixels[i + 2];
+
+      const dist = Math.sqrt(0.299 * (r - tr) ** 2 + 0.587 * (g - tg) ** 2 + 0.114 * (b - tb) ** 2);
+      
+      let alpha = 0;
+      if (dist < tolerance) {
+        const t = dist / tolerance;
+        alpha = Math.round(255 * (1.0 - t * t));
+      }
+
+      mPixels[i] = 255;
+      mPixels[i + 1] = 255;
+      mPixels[i + 2] = 255;
+      mPixels[i + 3] = alpha;
+    }
+
+    ctx.putImageData(maskImgData, 0, 0);
+  }
+
+  generateLumaRangeMask(mask) {
+    const canvas = mask.canvas;
+    if (!canvas || !this.baseImageElement) return;
+
+    const w = canvas.width;
+    const h = canvas.height;
+    const ctx = canvas.getContext('2d');
+
+    if (!this._imgSampleCanvas) {
+      this._imgSampleCanvas = document.createElement('canvas');
+    }
+    this._imgSampleCanvas.width = w;
+    this._imgSampleCanvas.height = h;
+    const sCtx = this._imgSampleCanvas.getContext('2d', { willReadFrequently: true });
+    sCtx.drawImage(this.baseImageElement, 0, 0, w, h);
+    const pixels = sCtx.getImageData(0, 0, w, h).data;
+
+    const minLuma = (mask.lumaMin !== undefined ? mask.lumaMin : 0) / 100 * 255;
+    const maxLuma = (mask.lumaMax !== undefined ? mask.lumaMax : 100) / 100 * 255;
+    const feather = (mask.lumaFeather !== undefined ? mask.lumaFeather : 20) / 100 * 255;
+
+    const maskImgData = ctx.createImageData(w, h);
+    const mPixels = maskImgData.data;
+
+    for (let i = 0; i < pixels.length; i += 4) {
+      const luma = 0.299 * pixels[i] + 0.587 * pixels[i + 1] + 0.114 * pixels[i + 2];
+      
+      let alpha = 255;
+      if (luma < minLuma) {
+        const d = minLuma - luma;
+        alpha = d > feather ? 0 : Math.round(255 * (1 - d / feather));
+      } else if (luma > maxLuma) {
+        const d = luma - maxLuma;
+        alpha = d > feather ? 0 : Math.round(255 * (1 - d / feather));
+      }
+
+      mPixels[i] = 255;
+      mPixels[i + 1] = 255;
+      mPixels[i + 2] = 255;
+      mPixels[i + 3] = alpha;
+    }
+
+    ctx.putImageData(maskImgData, 0, 0);
+  }
+
+  generateMagicWandMask(mask) {
+    const canvas = mask.canvas;
+    if (!canvas || !this.baseImageElement || !mask.wandPoint) return;
+
+    const w = canvas.width;
+    const h = canvas.height;
+    const ctx = canvas.getContext('2d');
+
+    if (!this._imgSampleCanvas) {
+      this._imgSampleCanvas = document.createElement('canvas');
+    }
+    this._imgSampleCanvas.width = w;
+    this._imgSampleCanvas.height = h;
+    const sCtx = this._imgSampleCanvas.getContext('2d', { willReadFrequently: true });
+    sCtx.drawImage(this.baseImageElement, 0, 0, w, h);
+    const pixels = sCtx.getImageData(0, 0, w, h).data;
+
+    const sx = Math.max(0, Math.min(w - 1, Math.round(mask.wandPoint.x * w)));
+    const sy = Math.max(0, Math.min(h - 1, Math.round(mask.wandPoint.y * h)));
+    const seedIdx = (sy * w + sx) * 4;
+    const sr = pixels[seedIdx];
+    const sg = pixels[seedIdx + 1];
+    const sb = pixels[seedIdx + 2];
+
+    const tol = (mask.wandTolerance !== undefined ? mask.wandTolerance : 25) / 100 * 255;
+
+    const visited = new Uint8Array(w * h);
+    const queue = [sx + sy * w];
+    visited[sx + sy * w] = 1;
+
+    const maskImgData = ctx.createImageData(w, h);
+    const mPixels = maskImgData.data;
+
+    let head = 0;
+    while (head < queue.length) {
+      const idx = queue[head++];
+      const px = idx % w;
+      const py = Math.floor(idx / w);
+
+      const pIdx = idx * 4;
+      const r = pixels[pIdx];
+      const g = pixels[pIdx + 1];
+      const b = pixels[pIdx + 2];
+
+      const diff = Math.sqrt(0.299 * (r - sr) ** 2 + 0.587 * (g - sg) ** 2 + 0.114 * (b - sb) ** 2);
+
+      if (diff <= tol) {
+        mPixels[pIdx] = 255;
+        mPixels[pIdx + 1] = 255;
+        mPixels[pIdx + 2] = 255;
+        mPixels[pIdx + 3] = 255;
+
+        const neighbors = [];
+        if (px > 0) neighbors.push(idx - 1);
+        if (px < w - 1) neighbors.push(idx + 1);
+        if (py > 0) neighbors.push(idx - w);
+        if (py < h - 1) neighbors.push(idx + w);
+
+        for (let i = 0; i < neighbors.length; i++) {
+          const nIdx = neighbors[i];
+          if (!visited[nIdx]) {
+            visited[nIdx] = 1;
+            queue.push(nIdx);
+          }
+        }
+      }
+    }
+
+    ctx.putImageData(maskImgData, 0, 0);
+  }
+
+  generateAISkyMask(mask) {
+    const canvas = mask.canvas;
+    if (!canvas || !this.baseImageElement) return;
+
+    const w = canvas.width;
+    const h = canvas.height;
+    const ctx = canvas.getContext('2d');
+
+    if (!this._imgSampleCanvas) {
+      this._imgSampleCanvas = document.createElement('canvas');
+    }
+    this._imgSampleCanvas.width = w;
+    this._imgSampleCanvas.height = h;
+    const sCtx = this._imgSampleCanvas.getContext('2d', { willReadFrequently: true });
+    sCtx.drawImage(this.baseImageElement, 0, 0, w, h);
+    const pixels = sCtx.getImageData(0, 0, w, h).data;
+
+    const maskImgData = ctx.createImageData(w, h);
+    const mPixels = maskImgData.data;
+
+    for (let y = 0; y < h; y++) {
+      const verticalWeight = 1.0 - (y / h) * 1.1;
+      if (verticalWeight <= 0) continue;
+
+      for (let x = 0; x < w; x++) {
+        const i = (y * w + x) * 4;
+        const r = pixels[i];
+        const g = pixels[i + 1];
+        const b = pixels[i + 2];
+
+        const luma = 0.299 * r + 0.587 * g + 0.114 * b;
+        const blueDom = b - r;
+        const isSkyLike = (blueDom > 10 || (luma > 180 && r < 230));
+
+        if (isSkyLike && verticalWeight > 0.05) {
+          const score = Math.min(1.0, (blueDom > 0 ? blueDom / 50 : 0.5) * verticalWeight);
+          const alpha = Math.round(255 * Math.max(0, score));
+          mPixels[i] = 255;
+          mPixels[i + 1] = 255;
+          mPixels[i + 2] = 255;
+          mPixels[i + 3] = alpha;
+        }
+      }
+    }
+
+    ctx.putImageData(maskImgData, 0, 0);
+  }
+
+  generateAISubjectMask(mask) {
+    const canvas = mask.canvas;
+    if (!canvas || !this.baseImageElement) return;
+
+    const w = canvas.width;
+    const h = canvas.height;
+    const ctx = canvas.getContext('2d');
+
+    if (!this._imgSampleCanvas) {
+      this._imgSampleCanvas = document.createElement('canvas');
+    }
+    this._imgSampleCanvas.width = w;
+    this._imgSampleCanvas.height = h;
+    const sCtx = this._imgSampleCanvas.getContext('2d', { willReadFrequently: true });
+    sCtx.drawImage(this.baseImageElement, 0, 0, w, h);
+    const pixels = sCtx.getImageData(0, 0, w, h).data;
+
+    const maskImgData = ctx.createImageData(w, h);
+    const mPixels = maskImgData.data;
+
+    const cx = w / 2;
+    const cy = h / 2;
+    const maxRadius = Math.hypot(cx, cy);
+
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const i = (y * w + x) * 4;
+        const distFromCenter = Math.hypot(x - cx, y - cy) / maxRadius;
+        const centerWeight = Math.max(0, 1.0 - distFromCenter * 1.2);
+
+        const r = pixels[i];
+        const g = pixels[i + 1];
+        const b = pixels[i + 2];
+        const luma = 0.299 * r + 0.587 * g + 0.114 * b;
+
+        if (centerWeight > 0.15 && luma > 30 && luma < 240) {
+          const alpha = Math.round(255 * centerWeight);
+          mPixels[i] = 255;
+          mPixels[i + 1] = 255;
+          mPixels[i + 2] = 255;
+          mPixels[i + 3] = alpha;
+        }
+      }
+    }
+
+    ctx.putImageData(maskImgData, 0, 0);
   }
 
   drawHealingBrush(ctx, x1, y1, x2, y2, size, feather) {

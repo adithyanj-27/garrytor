@@ -33,26 +33,34 @@ export class MaskingPanel {
     controlsRow.appendChild(addLabel);
 
     const btnGroup = document.createElement('div');
-    btnGroup.className = 'flex-row gap-xs';
-    btnGroup.style.width = '100%';
-    
     const maskTypes = [
       { type: 'brush', label: '🖌️ Brush' },
       { type: 'linear', label: '📈 Linear' },
-      { type: 'radial', label: '🎯 Radial' }
+      { type: 'radial', label: '🎯 Radial' },
+      { type: 'colorRange', label: '🎨 Color' },
+      { type: 'lumaRange', label: '💡 Luma' },
+      { type: 'magicWand', label: '🪄 Wand' },
+      { type: 'sky', label: '☁️ AI Sky' },
+      { type: 'subject', label: '👤 AI Subject' }
     ];
+    
+    const btnGrid = document.createElement('div');
+    btnGrid.style.display = 'grid';
+    btnGrid.style.gridTemplateColumns = 'repeat(4, 1fr)';
+    btnGrid.style.gap = '4px';
+    btnGrid.style.width = '100%';
     
     maskTypes.forEach(t => {
       const btn = document.createElement('button');
       btn.className = 'btn btn-ghost';
-      btn.style.flex = '1';
-      btn.style.fontSize = 'var(--font-size-xs)';
-      btn.style.padding = '6px 4px';
+      btn.style.fontSize = '11px';
+      btn.style.padding = '6px 2px';
+      btn.style.textAlign = 'center';
       btn.textContent = t.label;
       btn.addEventListener('click', () => this.createNewMask(t.type));
-      btnGroup.appendChild(btn);
+      btnGrid.appendChild(btn);
     });
-    controlsRow.appendChild(btnGroup);
+    controlsRow.appendChild(btnGrid);
 
     // Show Overlay Toggle
     const overlayRow = document.createElement('label');
@@ -125,7 +133,8 @@ export class MaskingPanel {
   createNewMask(type) {
     const state = this.editState.get();
     const id = `mask-${Date.now()}`;
-    const name = `Mask ${state.masks.length + 1} (${type.charAt(0).toUpperCase() + type.slice(1)})`;
+    const typeLabel = type.charAt(0).toUpperCase() + type.slice(1);
+    const name = `Mask ${state.masks.length + 1} (${typeLabel})`;
     
     const w = this.viewport.imageWidth || 1024;
     const h = this.viewport.imageHeight || 1024;
@@ -136,16 +145,23 @@ export class MaskingPanel {
     canvas.height = h;
     const ctx = canvas.getContext('2d');
     ctx.fillStyle = 'black';
-    ctx.fillRect(0, 0, w, h); // Default completely unmasked
+    ctx.fillRect(0, 0, w, h);
 
     const newMask = {
       id,
       name,
       type,
       visible: true,
+      inverted: false,
+      opacity: 100,
       canvas,
       brushSize: 50,
       brushFeather: 50,
+      colorTolerance: 30,
+      lumaMin: 0,
+      lumaMax: 100,
+      lumaFeather: 20,
+      wandTolerance: 25,
       // Default localized sliders
       settings: {
         exposure: 0,
@@ -159,7 +175,7 @@ export class MaskingPanel {
         saturation: 0,
         clarity: 0
       },
-      // Default coordinates (placed center)
+      // Default coordinates
       startPoint: { x: 0.3, y: 0.5 },
       endPoint: { x: 0.7, y: 0.5 },
       center: { x: 0.5, y: 0.5 },
@@ -167,6 +183,15 @@ export class MaskingPanel {
       radiusY: 0.15,
       feather: 50
     };
+
+    // Auto-trigger generator for sky or subject
+    if (type === 'sky') {
+      this.viewport.generateAISkyMask(newMask);
+    } else if (type === 'subject') {
+      this.viewport.generateAISubjectMask(newMask);
+    } else if (type === 'lumaRange') {
+      this.viewport.generateLumaRangeMask(newMask);
+    }
 
     const updatedMasks = [...state.masks, newMask];
     this.editState.set('masks', updatedMasks);
@@ -176,7 +201,13 @@ export class MaskingPanel {
     // Enter edit mode on viewport
     this.viewport.setMaskEditingMode(id);
     
-    Toast.success(`Created ${name}`);
+    if (type === 'colorRange') {
+      Toast.info('Click anywhere on the photo to pick a target color!');
+    } else if (type === 'magicWand') {
+      Toast.info('Click an object on the photo to select it!');
+    } else {
+      Toast.success(`Created ${name}`);
+    }
   }
 
   buildSliders() {
@@ -222,14 +253,24 @@ export class MaskingPanel {
       onChange: (val) => updateSetting('clarity', val)
     });
 
-    // Brush-specific sliders
+    // Mask specific sliders
+    this.sliders.maskOpacity = new Slider({
+      label: 'Mask Opacity Density', min: 0, max: 100, step: 1, defaultValue: 100,
+      onChange: (val) => {
+        const state = this.editState.get();
+        if (!state.activeMaskId) return;
+        const updated = state.masks.map(m => m.id === state.activeMaskId ? { ...m, opacity: val } : m);
+        this.editState.set('masks', updated);
+        this.viewport.draw();
+      }
+    });
+
     this.sliders.brushSize = new Slider({
       label: 'Brush Size', min: 5, max: 300, step: 1, defaultValue: 50,
       onChange: (val) => {
         const state = this.editState.get();
-        const activeId = state.activeMaskId;
-        if (!activeId) return;
-        const updated = state.masks.map(m => m.id === activeId ? { ...m, brushSize: val } : m);
+        if (!state.activeMaskId) return;
+        const updated = state.masks.map(m => m.id === state.activeMaskId ? { ...m, brushSize: val } : m);
         this.editState.set('masks', updated);
         this.viewport.draw();
       }
@@ -239,71 +280,138 @@ export class MaskingPanel {
       label: 'Brush Feather', min: 0, max: 100, step: 1, defaultValue: 50,
       onChange: (val) => {
         const state = this.editState.get();
-        const activeId = state.activeMaskId;
-        if (!activeId) return;
-        const updated = state.masks.map(m => m.id === activeId ? { ...m, brushFeather: val } : m);
+        if (!state.activeMaskId) return;
+        const updated = state.masks.map(m => m.id === state.activeMaskId ? { ...m, brushFeather: val } : m);
         this.editState.set('masks', updated);
         this.viewport.draw();
+      }
+    });
+
+    this.sliders.colorTolerance = new Slider({
+      label: 'Color Range Sensitivity', min: 1, max: 100, step: 1, defaultValue: 30,
+      onChange: (val) => {
+        const state = this.editState.get();
+        if (!state.activeMaskId) return;
+        const mask = state.masks.find(m => m.id === state.activeMaskId);
+        if (!mask) return;
+        mask.colorTolerance = val;
+        this.viewport.generateColorRangeMask(mask);
+        this.editState._notify();
+      }
+    });
+
+    this.sliders.lumaMin = new Slider({
+      label: 'Min Brightness', min: 0, max: 100, step: 1, defaultValue: 0,
+      onChange: (val) => {
+        const state = this.editState.get();
+        if (!state.activeMaskId) return;
+        const mask = state.masks.find(m => m.id === state.activeMaskId);
+        if (!mask) return;
+        mask.lumaMin = val;
+        this.viewport.generateLumaRangeMask(mask);
+        this.editState._notify();
+      }
+    });
+
+    this.sliders.lumaMax = new Slider({
+      label: 'Max Brightness', min: 0, max: 100, step: 1, defaultValue: 100,
+      onChange: (val) => {
+        const state = this.editState.get();
+        if (!state.activeMaskId) return;
+        const mask = state.masks.find(m => m.id === state.activeMaskId);
+        if (!mask) return;
+        mask.lumaMax = val;
+        this.viewport.generateLumaRangeMask(mask);
+        this.editState._notify();
+      }
+    });
+
+    this.sliders.lumaFeather = new Slider({
+      label: 'Range Feather', min: 0, max: 100, step: 1, defaultValue: 20,
+      onChange: (val) => {
+        const state = this.editState.get();
+        if (!state.activeMaskId) return;
+        const mask = state.masks.find(m => m.id === state.activeMaskId);
+        if (!mask) return;
+        mask.lumaFeather = val;
+        this.viewport.generateLumaRangeMask(mask);
+        this.editState._notify();
+      }
+    });
+
+    this.sliders.wandTolerance = new Slider({
+      label: 'Object Edge Sensitivity', min: 5, max: 100, step: 1, defaultValue: 25,
+      onChange: (val) => {
+        const state = this.editState.get();
+        if (!state.activeMaskId) return;
+        const mask = state.masks.find(m => m.id === state.activeMaskId);
+        if (!mask) return;
+        mask.wandTolerance = val;
+        this.viewport.generateMagicWandMask(mask);
+        this.editState._notify();
       }
     });
   }
 
   syncUI(state) {
-    if (!this.layersList) return;
-
+    if (!this.overlayCheck) return;
     this.overlayCheck.checked = !!state.showOverlay;
 
-    // Render layers
+    // Render mask layers list
     this.layersList.innerHTML = '';
     
-    if (state.masks.length === 0) {
+    if (!state.masks || state.masks.length === 0) {
       const empty = document.createElement('div');
-      empty.style.textAlign = 'center';
-      empty.style.color = 'var(--text-secondary)';
       empty.style.fontSize = 'var(--font-size-xs)';
-      empty.style.padding = '8px 0';
-      empty.textContent = 'No local mask adjustments';
+      empty.style.color = 'var(--text-tertiary)';
+      empty.style.textAlign = 'center';
+      empty.style.padding = '8px';
+      empty.textContent = 'No local masks created yet.';
       this.layersList.appendChild(empty);
-      
-      this.settingsContainer.style.display = 'none';
-      return;
     }
 
-    this.settingsContainer.style.display = 'flex';
-
     state.masks.forEach(mask => {
-      const item = document.createElement('div');
-      item.className = `flex-between align-center p-xs rounded ${state.activeMaskId === mask.id ? 'active' : ''}`;
-      item.style.padding = '6px 8px';
-      item.style.backgroundColor = state.activeMaskId === mask.id ? 'var(--border-color)' : 'transparent';
-      item.style.cursor = 'pointer';
-      item.style.transition = 'background-color 0.2s';
+      const isActive = mask.id === state.activeMaskId;
       
-      // Left side: icon & name
+      const item = document.createElement('div');
+      item.className = `mask-item flex-between align-center ${isActive ? 'active' : ''}`;
+      item.style.padding = '6px 8px';
+      item.style.borderRadius = 'var(--radius-sm)';
+      item.style.backgroundColor = isActive ? 'var(--bg-tertiary)' : 'var(--bg-secondary)';
+      item.style.border = isActive ? '1px solid var(--accent-color)' : '1px solid transparent';
+      item.style.cursor = 'pointer';
+
+      // Left side: icon & title
       const left = document.createElement('div');
       left.className = 'flex-row gap-xs align-center';
       left.style.fontSize = 'var(--font-size-xs)';
-      left.style.color = mask.visible ? 'var(--text-primary)' : 'var(--text-secondary)';
-      
-      let icon = '🖌️';
-      if (mask.type === 'linear') icon = '📈';
-      if (mask.type === 'radial') icon = '🎯';
-      
-      left.innerHTML = `<span>${icon}</span> <span>${mask.name}</span>`;
-      
-      // Select layer on click
-      item.addEventListener('click', (e) => {
-        // Prevent trigger if clicking actions
-        if (e.target.closest('.action-btn')) return;
+      left.style.fontWeight = isActive ? '600' : '400';
+      left.textContent = mask.name;
+      left.addEventListener('click', () => {
         this.editState.set('activeMaskId', mask.id);
         this.viewport.setMaskEditingMode(mask.id);
       });
       item.appendChild(left);
 
-      // Right side: toggle eye & delete
+      // Right side: invert, toggle eye & delete
       const right = document.createElement('div');
-      right.className = 'flex-row gap-xs';
+      right.className = 'flex-row gap-xs align-center';
       
+      // Invert button
+      const invertBtn = document.createElement('button');
+      invertBtn.className = 'btn btn-ghost action-btn';
+      invertBtn.style.padding = '2px 4px';
+      invertBtn.style.fontSize = '10px';
+      invertBtn.textContent = mask.inverted ? '🔄 Inv' : '🔄';
+      invertBtn.title = 'Invert Mask';
+      invertBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const updated = state.masks.map(m => m.id === mask.id ? { ...m, inverted: !m.inverted } : m);
+        this.editState.set('masks', updated);
+        this.viewport.draw();
+      });
+      right.appendChild(invertBtn);
+
       // Visibility Eye Toggle
       const eyeBtn = document.createElement('button');
       eyeBtn.className = 'btn btn-ghost action-btn';
@@ -311,16 +419,8 @@ export class MaskingPanel {
       eyeBtn.style.fontSize = 'var(--font-size-xs)';
       eyeBtn.textContent = mask.visible ? '👁️' : '👁️‍🗨️';
       eyeBtn.title = 'Toggle Visibility';
-      eyeBtn.addEventListener('click', () => {
-        const updated = state.masks.map(m => m.id === mask.id ? { ...m, visible: !m.visible } : m);
-        // Wait, if visible is toggled off, how does shader know?
-        // We set the canvas reference to null or let it render black. 
-        // Let's implement this: in WebGLRenderer, if mask.visible is false, we skip applying adjustments!
-        // This is handled by verifying mask.visible is true in WebGLRenderer!
-        // Let's make sure our WebGLRenderer code checks `if (!mask.canvas || !mask.visible) continue;`
-        // Oh yes! In WebGLRenderer line 150: `if (!mask.canvas || !mask.visible) continue;`
-        // Let's double check if we wrote that in WebGLRenderer. We wrote `if (!mask.canvas) continue;`.
-        // Let's update that to check `!mask.canvas || mask.visible === false`!
+      eyeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
         const vis = !mask.visible;
         const updatedMasks = state.masks.map(m => m.id === mask.id ? { ...m, visible: vis } : m);
         this.editState.set('masks', updatedMasks);
@@ -335,7 +435,8 @@ export class MaskingPanel {
       delBtn.style.fontSize = 'var(--font-size-xs)';
       delBtn.textContent = '🗑️';
       delBtn.title = 'Delete Mask';
-      delBtn.addEventListener('click', () => {
+      delBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
         const updated = state.masks.filter(m => m.id !== mask.id);
         const nextActive = updated.length > 0 ? updated[updated.length - 1].id : null;
         
@@ -405,6 +506,10 @@ export class MaskingPanel {
       settingsHeader.appendChild(resetBtn);
       this.settingsContainer.appendChild(settingsHeader);
 
+      // Mask Density / Opacity Slider
+      this.settingsContainer.appendChild(this.sliders.maskOpacity.element);
+
+      // Local Adjustments Sliders
       this.settingsContainer.appendChild(this.sliders.exposure.element);
       this.settingsContainer.appendChild(this.sliders.contrast.element);
       this.settingsContainer.appendChild(this.sliders.temperature.element);
@@ -412,7 +517,7 @@ export class MaskingPanel {
       this.settingsContainer.appendChild(this.sliders.saturation.element);
       this.settingsContainer.appendChild(this.sliders.clarity.element);
 
-      // Brush parameter sliders (Brush specific)
+      // Type Specific Controls
       if (activeMask.type === 'brush') {
         const brushTitle = document.createElement('div');
         brushTitle.style.fontSize = 'var(--font-size-xs)';
@@ -421,13 +526,41 @@ export class MaskingPanel {
         brushTitle.style.marginTop = '8px';
         brushTitle.textContent = `BRUSH SETTINGS`;
         this.settingsContainer.appendChild(brushTitle);
-
         this.settingsContainer.appendChild(this.sliders.brushSize.element);
         this.settingsContainer.appendChild(this.sliders.brushFeather.element);
+      } else if (activeMask.type === 'colorRange') {
+        const cTitle = document.createElement('div');
+        cTitle.style.fontSize = 'var(--font-size-xs)';
+        cTitle.style.color = 'var(--text-secondary)';
+        cTitle.style.fontWeight = '600';
+        cTitle.style.marginTop = '8px';
+        cTitle.textContent = `COLOR RANGE SETTINGS`;
+        this.settingsContainer.appendChild(cTitle);
+        this.settingsContainer.appendChild(this.sliders.colorTolerance.element);
+      } else if (activeMask.type === 'lumaRange') {
+        const lTitle = document.createElement('div');
+        lTitle.style.fontSize = 'var(--font-size-xs)';
+        lTitle.style.color = 'var(--text-secondary)';
+        lTitle.style.fontWeight = '600';
+        lTitle.style.marginTop = '8px';
+        lTitle.textContent = `LUMINANCE RANGE SETTINGS`;
+        this.settingsContainer.appendChild(lTitle);
+        this.settingsContainer.appendChild(this.sliders.lumaMin.element);
+        this.settingsContainer.appendChild(this.sliders.lumaMax.element);
+        this.settingsContainer.appendChild(this.sliders.lumaFeather.element);
+      } else if (activeMask.type === 'magicWand') {
+        const wTitle = document.createElement('div');
+        wTitle.style.fontSize = 'var(--font-size-xs)';
+        wTitle.style.color = 'var(--text-secondary)';
+        wTitle.style.fontWeight = '600';
+        wTitle.style.marginTop = '8px';
+        wTitle.textContent = `OBJECT SELECTION SETTINGS`;
+        this.settingsContainer.appendChild(wTitle);
+        this.settingsContainer.appendChild(this.sliders.wandTolerance.element);
       }
     }
 
-    // Always sync slider values (cheap, no DOM teardown)
+    // Always sync slider values
     this.settingsContainer.style.display = 'flex';
     const s = activeMask.settings;
     this.sliders.exposure.setValue(s.exposure);
@@ -436,10 +569,19 @@ export class MaskingPanel {
     this.sliders.tint.setValue(s.tint);
     this.sliders.saturation.setValue(s.saturation);
     this.sliders.clarity.setValue(s.clarity);
+    this.sliders.maskOpacity.setValue(activeMask.opacity !== undefined ? activeMask.opacity : 100);
 
     if (activeMask.type === 'brush') {
       this.sliders.brushSize.setValue(activeMask.brushSize);
       this.sliders.brushFeather.setValue(activeMask.brushFeather);
+    } else if (activeMask.type === 'colorRange') {
+      this.sliders.colorTolerance.setValue(activeMask.colorTolerance !== undefined ? activeMask.colorTolerance : 30);
+    } else if (activeMask.type === 'lumaRange') {
+      this.sliders.lumaMin.setValue(activeMask.lumaMin !== undefined ? activeMask.lumaMin : 0);
+      this.sliders.lumaMax.setValue(activeMask.lumaMax !== undefined ? activeMask.lumaMax : 100);
+      this.sliders.lumaFeather.setValue(activeMask.lumaFeather !== undefined ? activeMask.lumaFeather : 20);
+    } else if (activeMask.type === 'magicWand') {
+      this.sliders.wandTolerance.setValue(activeMask.wandTolerance !== undefined ? activeMask.wandTolerance : 25);
     }
   }
 
