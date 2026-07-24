@@ -68,10 +68,11 @@ window.triggerPWAInstall = async () => {
     }
     deferredInstallPrompt = null;
   } else {
+    const msg = "To install Garrytor: Click the Install icon (⤓) in your browser address bar, or click Menu (⋮) → 'Install Garrytor'.";
     if (window.GarrytorToast) {
-      window.GarrytorToast.info("To install: Click your browser menu (⋮ or ⎋) and select 'Install Garrytor' or 'Add to Home Screen'.");
+      window.GarrytorToast.info(msg);
     } else {
-      alert("To install Garrytor: Click your browser menu (⋮ or ⎋) and select 'Install Garrytor' or 'Add to Home Screen'.");
+      alert(msg);
     }
   }
 };
