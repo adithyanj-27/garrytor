@@ -1,6 +1,7 @@
 {
   "name": "Garrytor",
   "short_name": "Garrytor",
+  "id": "/",
   "description": "Professional browser-based photo editor with GPU-accelerated adjustments, masking, healing, curves, and RAW support.",
   "start_url": "/",
   "display": "standalone",
