@@ -19,13 +19,29 @@ export const getProjects = async (userId) => {
     return { data: projects.sort((a,b) => new Date(b.created_at) - new Date(a.created_at)), error: null };
   }
 
-  const { data, error } = await supabase
-    .from('projects')
-    .select('*')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false });
+  try {
+    const { data: userData } = await supabase.auth.getUser();
+    const effectiveUserId = (userData && userData.user) ? userData.user.id : userId;
 
-  return { data, error };
+    const { data, error } = await supabase
+      .from('projects')
+      .select('*')
+      .eq('user_id', effectiveUserId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.warn('Supabase getProjects failed, returning local projects:', error.message);
+      const projects = getLocalProjects();
+      return { data: projects.sort((a,b) => new Date(b.created_at) - new Date(a.created_at)), error: null };
+    }
+
+    const localProjects = getLocalProjects();
+    const allProjects = [...(data || []), ...localProjects];
+    return { data: allProjects, error: null };
+  } catch (err) {
+    const projects = getLocalProjects();
+    return { data: projects.sort((a,b) => new Date(b.created_at) - new Date(a.created_at)), error: null };
+  }
 };
 
 export const getProject = async (projectId, userId) => {
@@ -36,20 +52,30 @@ export const getProject = async (projectId, userId) => {
     return { data: proj || null, error: proj ? null : new Error('Project not found') };
   }
 
-  const { data, error } = await supabase
-    .from('projects')
-    .select('*')
-    .eq('id', projectId)
-    .eq('user_id', userId)
-    .single();
+  try {
+    const { data, error } = await supabase
+      .from('projects')
+      .select('*')
+      .eq('id', projectId)
+      .single();
 
-  return { data, error };
+    if (error) {
+      const projects = getLocalProjects();
+      const proj = projects.find(p => p.id === projectId);
+      return { data: proj || null, error: proj ? null : error };
+    }
+
+    return { data, error: null };
+  } catch (err) {
+    const projects = getLocalProjects();
+    const proj = projects.find(p => p.id === projectId);
+    return { data: proj || null, error: proj ? null : err };
+  }
 };
 
 export const createProject = async (userId, name, originalPath, thumbnailPath) => {
   const isGuest = userId === 'guest';
   const newProject = {
-    id: (isConfigured() && !isGuest) ? undefined : `proj-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
     user_id: userId,
     name,
     original_path: originalPath,
@@ -60,19 +86,43 @@ export const createProject = async (userId, name, originalPath, thumbnailPath) =
   };
 
   if (!isConfigured() || isGuest) {
+    newProject.id = `proj-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     const projects = getLocalProjects();
     projects.push(newProject);
     saveLocalProjects(projects);
     return { data: newProject, error: null };
   }
 
-  const { data, error } = await supabase
-    .from('projects')
-    .insert([newProject])
-    .select()
-    .single();
+  try {
+    const { data: userData } = await supabase.auth.getUser();
+    if (userData && userData.user) {
+      newProject.user_id = userData.user.id;
+    }
 
-  return { data, error };
+    const { data, error } = await supabase
+      .from('projects')
+      .insert([newProject])
+      .select()
+      .single();
+
+    if (error) {
+      console.warn('Supabase DB insert failed (falling back to local storage):', error.message);
+      newProject.id = `proj-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      const projects = getLocalProjects();
+      projects.push(newProject);
+      saveLocalProjects(projects);
+      return { data: newProject, error: null };
+    }
+
+    return { data, error: null };
+  } catch (err) {
+    console.warn('Supabase DB error (falling back to local storage):', err.message);
+    newProject.id = `proj-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const projects = getLocalProjects();
+    projects.push(newProject);
+    saveLocalProjects(projects);
+    return { data: newProject, error: null };
+  }
 };
 
 export const updateProjectState = async (projectId, editState, thumbnailPath = null) => {
@@ -98,14 +148,35 @@ export const updateProjectState = async (projectId, editState, thumbnailPath = n
     return { data: null, error: new Error('Project not found') };
   }
 
-  const { data, error } = await supabase
-    .from('projects')
-    .update(updateData)
-    .eq('id', projectId)
-    .select()
-    .single();
+  try {
+    const { data, error } = await supabase
+      .from('projects')
+      .update(updateData)
+      .eq('id', projectId)
+      .select()
+      .single();
 
-  return { data, error };
+    if (error) {
+      const projects = getLocalProjects();
+      const idx = projects.findIndex(p => p.id === projectId);
+      if (idx !== -1) {
+        projects[idx] = { ...projects[idx], ...updateData };
+        saveLocalProjects(projects);
+        return { data: projects[idx], error: null };
+      }
+    }
+
+    return { data, error };
+  } catch (err) {
+    const projects = getLocalProjects();
+    const idx = projects.findIndex(p => p.id === projectId);
+    if (idx !== -1) {
+      projects[idx] = { ...projects[idx], ...updateData };
+      saveLocalProjects(projects);
+      return { data: projects[idx], error: null };
+    }
+    return { data: null, error: err };
+  }
 };
 
 export const deleteProject = async (projectId) => {

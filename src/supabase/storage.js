@@ -68,20 +68,30 @@ export const uploadImage = async (userId, file) => {
     }
   }
 
-  const { data, error } = await supabase.storage
-    .from('garrytor-media')
-    .upload(path, file, {
-      cacheControl: '3600',
-      upsert: false
-    });
+  try {
+    const { data, error } = await supabase.storage
+      .from('garrytor-media')
+      .upload(path, file, {
+        cacheControl: '3600',
+        upsert: false
+      });
 
-  if (error) return { path: null, url: null, error };
-  
-  const { data: urlData } = supabase.storage
-    .from('garrytor-media')
-    .getPublicUrl(path);
+    if (error) {
+      console.warn('Supabase storage upload error, falling back to local storage:', error.message);
+      await storeBlobLocal(path, file);
+      return { path, url: path, error: null };
+    }
+    
+    const { data: urlData } = supabase.storage
+      .from('garrytor-media')
+      .getPublicUrl(path);
 
-  return { path, url: urlData.publicUrl, error: null };
+    return { path, url: urlData.publicUrl, error: null };
+  } catch (err) {
+    console.warn('Supabase storage upload exception, falling back to local storage:', err.message);
+    await storeBlobLocal(path, file);
+    return { path, url: path, error: null };
+  }
 };
 
 export const uploadExport = async (userId, imageId, blob) => {
@@ -97,20 +107,30 @@ export const uploadExport = async (userId, imageId, blob) => {
     }
   }
 
-  const { data, error } = await supabase.storage
-    .from('garrytor-media')
-    .upload(path, blob, {
-      contentType: 'image/jpeg',
-      upsert: true
-    });
+  try {
+    const { data, error } = await supabase.storage
+      .from('garrytor-media')
+      .upload(path, blob, {
+        contentType: 'image/jpeg',
+        upsert: true
+      });
 
-  if (error) return { path: null, url: null, error };
-  
-  const { data: urlData } = supabase.storage
-    .from('garrytor-media')
-    .getPublicUrl(path);
+    if (error) {
+      console.warn('Supabase storage upload export error, falling back to local storage:', error.message);
+      await storeBlobLocal(path, blob);
+      return { path, url: path, error: null };
+    }
+    
+    const { data: urlData } = supabase.storage
+      .from('garrytor-media')
+      .getPublicUrl(path);
 
-  return { path, url: urlData.publicUrl, error: null };
+    return { path, url: urlData.publicUrl, error: null };
+  } catch (err) {
+    console.warn('Supabase storage upload export exception, falling back to local storage:', err.message);
+    await storeBlobLocal(path, blob);
+    return { path, url: path, error: null };
+  }
 };
 
 export const getImageUrl = async (path) => {
