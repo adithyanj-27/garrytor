@@ -37,8 +37,10 @@ try { localStorage.removeItem('garrytor_pwa_installed'); } catch (e) {}
 let deferredInstallPrompt = null;
 
 window.addEventListener('beforeinstallprompt', (e) => {
+  console.log('[Garrytor PWA] beforeinstallprompt event captured!', e);
   e.preventDefault();
   deferredInstallPrompt = e;
+  window.deferredInstallPrompt = e;
   showInstallButton();
 });
 
