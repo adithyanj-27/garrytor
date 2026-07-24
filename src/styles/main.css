@@ -14,10 +14,13 @@ body {
   color: var(--text-primary);
   font-family: var(--font-family);
   font-size: var(--font-size-md);
+  letter-spacing: -0.01em;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
   overflow: hidden;
   height: 100vh;
   width: 100vw;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Scrollbars */

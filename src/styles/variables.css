@@ -24,8 +24,8 @@
   --info: #3b82f6;
 
   /* Typography */
-  --font-family: 'Outfit', system-ui, -apple-system, sans-serif;
-  --font-family-logo: 'Cormorant Garamond', serif;
+  --font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-family-logo: 'Playfair Display', serif;
   --font-size-xs: 11px;
   --font-size-sm: 12px;
   --font-size-md: 14px;
