@@ -3,6 +3,7 @@ import { uploadImage, uploadExport, getImageUrl, deleteImage } from '../../supab
 import { signOut, getUserDisplayName } from '../../supabase/auth';
 import { validateFile, loadImageElement, generateThumbnail, isRawFile } from '../../utils/ImageLoader';
 import { Toast } from '../components/Toast';
+import { Icons } from '../components/Icons';
 
 export class Dashboard {
   constructor(container, user, onSelectProject, onSignOut) {
@@ -256,7 +257,9 @@ export class Dashboard {
       empty.style.padding = '48px';
       empty.style.color = 'var(--text-secondary)';
       empty.innerHTML = `
-        <div style="font-size: 32px; margin-bottom: 12px;">📭</div>
+        <div style="font-size: 32px; margin-bottom: 12px; display: flex; justify-content: center; opacity: 0.5;">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg>
+        </div>
         <div>No projects found. Upload a photo to start editing!</div>
       `;
       this.grid.appendChild(empty);
@@ -279,7 +282,7 @@ export class Dashboard {
           img.alt = proj.name;
           thumbContainer.appendChild(img);
         } else {
-          thumbContainer.innerHTML = '🖼️';
+          thumbContainer.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>`;
         }
       });
       card.appendChild(thumbContainer);
@@ -307,9 +310,10 @@ export class Dashboard {
       actions.className = 'card-actions';
       
       const deleteBtn = document.createElement('button');
-      deleteBtn.className = 'btn btn-ghost btn-icon';
+      deleteBtn.className = 'btn btn-ghost btn-icon flex-row align-center justify-center';
       deleteBtn.style.backgroundColor = 'rgba(0,0,0,0.6)';
-      deleteBtn.innerHTML = '🗑️';
+      deleteBtn.style.padding = '6px';
+      deleteBtn.innerHTML = Icons.trash;
       deleteBtn.title = 'Delete Project';
       deleteBtn.addEventListener('click', (e) => {
         e.stopPropagation(); // prevent opening editor

@@ -1,3 +1,5 @@
+import { Icons } from './components/Icons';
+
 export class Toolbar {
   constructor(container, options = {}) {
     this.container = container;
@@ -27,7 +29,7 @@ export class Toolbar {
 
     const backBtn = document.createElement('button');
     backBtn.className = 'btn btn-ghost btn-icon';
-    backBtn.innerHTML = '⬅️';
+    backBtn.innerHTML = Icons.back;
     backBtn.title = 'Back to Library';
     backBtn.addEventListener('click', () => {
       if (this.onBack) this.onBack();
@@ -56,7 +58,7 @@ export class Toolbar {
 
     const undoBtn = document.createElement('button');
     undoBtn.className = 'btn btn-ghost btn-icon';
-    undoBtn.innerHTML = '↩️';
+    undoBtn.innerHTML = Icons.undo;
     undoBtn.title = 'Undo (Ctrl+Z)';
     undoBtn.disabled = true;
     undoBtn.addEventListener('click', () => {
@@ -66,7 +68,7 @@ export class Toolbar {
 
     const redoBtn = document.createElement('button');
     redoBtn.className = 'btn btn-ghost btn-icon';
-    redoBtn.innerHTML = '↪️';
+    redoBtn.innerHTML = Icons.redo;
     redoBtn.title = 'Redo (Ctrl+Shift+Z)';
     redoBtn.disabled = true;
     redoBtn.addEventListener('click', () => {
@@ -80,8 +82,8 @@ export class Toolbar {
 
     // Before/After comparison toggle
     const splitBtn = document.createElement('button');
-    splitBtn.className = 'btn btn-ghost split-compare-btn';
-    splitBtn.innerHTML = '🌓 Split Compare';
+    splitBtn.className = 'btn btn-ghost split-compare-btn flex-row gap-xs align-center';
+    splitBtn.innerHTML = `${Icons.splitCompare} <span>Split Compare</span>`;
     splitBtn.title = 'Before / After Comparison';
     splitBtn.addEventListener('click', () => {
       this.isSplitActive = !this.isSplitActive;

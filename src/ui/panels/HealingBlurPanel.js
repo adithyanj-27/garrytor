@@ -103,7 +103,7 @@ export class HealingBlurPanel {
     hr.style.backgroundColor = 'var(--border-color)';
     panel.appendChild(hr);
 
-    // --- SECTION 2: LENS BLUR 🔥 ---
+    // --- SECTION 2: LENS BLUR (BOKEH) ---
     const blurSec = document.createElement('div');
     blurSec.className = 'flex-column gap-sm';
     
@@ -115,7 +115,10 @@ export class HealingBlurPanel {
     blurTitle.style.fontSize = 'var(--font-size-xs)';
     blurTitle.style.fontWeight = '700';
     blurTitle.style.color = 'var(--text-secondary)';
-    blurTitle.textContent = 'LENS BLUR 🔥';
+    blurTitle.style.display = 'flex';
+    blurTitle.style.alignItems = 'center';
+    blurTitle.style.gap = '6px';
+    blurTitle.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg> LENS BLUR (BOKEH)`;
     blurHeader.appendChild(blurTitle);
 
     const blurToggleBtn = document.createElement('button');
@@ -150,10 +153,13 @@ export class HealingBlurPanel {
     alertBox.style.fontSize = '11px';
     alertBox.style.padding = '6px 10px';
     alertBox.style.borderRadius = 'var(--radius-sm)';
-    alertBox.style.backgroundColor = 'rgba(255, 62, 85, 0.08)';
-    alertBox.style.border = '1px solid rgba(255, 62, 85, 0.2)';
+    alertBox.style.backgroundColor = 'rgba(255, 140, 66, 0.08)';
+    alertBox.style.border = '1px solid rgba(255, 140, 66, 0.2)';
     alertBox.style.color = 'var(--text-secondary)';
-    alertBox.innerHTML = 'ℹ️ Click/drag on image to move the focal circle.';
+    alertBox.style.display = 'flex';
+    alertBox.style.alignItems = 'center';
+    alertBox.style.gap = '6px';
+    alertBox.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg> Click/drag on image to adjust the focus center.`;
     blurSec.appendChild(alertBox);
 
     const blurControls = document.createElement('div');

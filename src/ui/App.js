@@ -9,6 +9,7 @@ import { exportCanvas } from '../utils/ExportUtils';
 
 // Components & Views
 import { Toast } from './components/Toast';
+import { Icons } from './components/Icons';
 import { OnboardingTour } from './components/OnboardingTour';
 import { AuthPage } from './pages/AuthPage';
 import { Dashboard } from './pages/Dashboard';
@@ -246,9 +247,9 @@ export class App {
     const basicSec = this._createAccordionSection(rightScroll, 'Basic Adjustments', true);
     const curveSec = this._createAccordionSection(rightScroll, 'Tone Curve', false);
     const hslSec = this._createAccordionSection(rightScroll, 'Color Mixer / HSL', false);
-    const maskSec = this._createAccordionSection(rightScroll, 'Masking 🎭', false);
-    const healingBlurSec = this._createAccordionSection(rightScroll, 'Healing & Blur 🧹🔥', false);
-    const exportSec = this._createAccordionSection(rightScroll, 'Export settings', false);
+    const maskSec = this._createAccordionSection(rightScroll, 'Selective Masking', false);
+    const healingBlurSec = this._createAccordionSection(rightScroll, 'Healing & Lens Blur', false);
+    const exportSec = this._createAccordionSection(rightScroll, 'Export Settings', false);
 
     // Instantiate and connect a fresh WebGL Renderer for this session
     this.renderer = new WebGLRenderer();
@@ -304,10 +305,9 @@ export class App {
     mobileFooter.className = 'editor-footer-mobile';
     
     const presetsBtn = document.createElement('button');
-    presetsBtn.className = 'btn btn-ghost flex-row gap-sm';
+    presetsBtn.className = 'btn btn-ghost flex-row gap-xs align-center justify-center';
     presetsBtn.style.flex = '1';
-    presetsBtn.style.justifyContent = 'center';
-    presetsBtn.innerHTML = '📁 Presets';
+    presetsBtn.innerHTML = `${Icons.presets} <span>Presets</span>`;
     presetsBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       leftPanel.classList.toggle('mobile-open');
@@ -315,10 +315,9 @@ export class App {
     });
     
     const adjustBtn = document.createElement('button');
-    adjustBtn.className = 'btn btn-ghost flex-row gap-sm';
+    adjustBtn.className = 'btn btn-ghost flex-row gap-xs align-center justify-center';
     adjustBtn.style.flex = '1';
-    adjustBtn.style.justifyContent = 'center';
-    adjustBtn.innerHTML = '🎛️ Adjustments';
+    adjustBtn.innerHTML = `${Icons.adjustments} <span>Adjustments</span>`;
     adjustBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       rightPanel.classList.toggle('mobile-open');

@@ -1,5 +1,6 @@
 import { Slider } from '../components/Slider';
 import { Toast } from '../components/Toast';
+import { Icons } from '../components/Icons';
 
 export class MaskingPanel {
   constructor(container, editState, viewport) {
@@ -34,14 +35,14 @@ export class MaskingPanel {
 
     const btnGroup = document.createElement('div');
     const maskTypes = [
-      { type: 'brush', label: '🖌️ Brush' },
-      { type: 'linear', label: '📈 Linear' },
-      { type: 'radial', label: '🎯 Radial' },
-      { type: 'colorRange', label: '🎨 Color' },
-      { type: 'lumaRange', label: '💡 Luma' },
-      { type: 'magicWand', label: '🪄 Wand' },
-      { type: 'sky', label: '☁️ AI Sky' },
-      { type: 'subject', label: '👤 AI Subject' }
+      { type: 'brush', label: `${Icons.brush} Brush` },
+      { type: 'linear', label: `${Icons.linearGradient} Linear` },
+      { type: 'radial', label: `${Icons.radialGradient} Radial` },
+      { type: 'colorRange', label: `${Icons.colorRange} Color` },
+      { type: 'lumaRange', label: `${Icons.lumaRange} Luma` },
+      { type: 'magicWand', label: `${Icons.magicWand} Wand` },
+      { type: 'sky', label: `${Icons.sky} Sky` },
+      { type: 'subject', label: `${Icons.subject} Subject` }
     ];
     
     const btnGrid = document.createElement('div');
@@ -52,11 +53,10 @@ export class MaskingPanel {
     
     maskTypes.forEach(t => {
       const btn = document.createElement('button');
-      btn.className = 'btn btn-ghost';
+      btn.className = 'btn btn-ghost flex-row gap-xs align-center justify-center';
       btn.style.fontSize = '11px';
       btn.style.padding = '6px 2px';
-      btn.style.textAlign = 'center';
-      btn.textContent = t.label;
+      btn.innerHTML = t.label;
       btn.addEventListener('click', () => this.createNewMask(t.type));
       btnGrid.appendChild(btn);
     });
@@ -399,10 +399,10 @@ export class MaskingPanel {
       
       // Invert button
       const invertBtn = document.createElement('button');
-      invertBtn.className = 'btn btn-ghost action-btn';
-      invertBtn.style.padding = '2px 4px';
+      invertBtn.className = 'btn btn-ghost action-btn flex-row gap-xs align-center';
+      invertBtn.style.padding = '2px 6px';
       invertBtn.style.fontSize = '10px';
-      invertBtn.textContent = mask.inverted ? '🔄 Inv' : '🔄';
+      invertBtn.innerHTML = `${Icons.invert} <span>Invert</span>`;
       invertBtn.title = 'Invert Mask';
       invertBtn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -415,9 +415,8 @@ export class MaskingPanel {
       // Visibility Eye Toggle
       const eyeBtn = document.createElement('button');
       eyeBtn.className = 'btn btn-ghost action-btn';
-      eyeBtn.style.padding = '2px';
-      eyeBtn.style.fontSize = 'var(--font-size-xs)';
-      eyeBtn.textContent = mask.visible ? '👁️' : '👁️‍🗨️';
+      eyeBtn.style.padding = '2px 4px';
+      eyeBtn.innerHTML = mask.visible ? Icons.eye : Icons.eyeOff;
       eyeBtn.title = 'Toggle Visibility';
       eyeBtn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -431,9 +430,8 @@ export class MaskingPanel {
       // Delete trash
       const delBtn = document.createElement('button');
       delBtn.className = 'btn btn-ghost action-btn';
-      delBtn.style.padding = '2px';
-      delBtn.style.fontSize = 'var(--font-size-xs)';
-      delBtn.textContent = '🗑️';
+      delBtn.style.padding = '2px 4px';
+      delBtn.innerHTML = Icons.trash;
       delBtn.title = 'Delete Mask';
       delBtn.addEventListener('click', (e) => {
         e.stopPropagation();
