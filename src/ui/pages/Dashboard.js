@@ -79,11 +79,12 @@ export class Dashboard {
     rightGroup.appendChild(profilePill);
 
     // PWA Install Button
+    const isInstalled = window.isPWAInstalled ? window.isPWAInstalled() : false;
     const installBtn = document.createElement('button');
     installBtn.id = 'pwa-install-btn';
     installBtn.className = 'btn btn-ghost pwa-install-btn';
     installBtn.style.fontSize = 'var(--font-size-xs)';
-    installBtn.style.display = 'flex';
+    installBtn.style.display = isInstalled ? 'none' : 'flex';
     installBtn.style.alignItems = 'center';
     installBtn.style.gap = '6px';
     installBtn.innerHTML = `

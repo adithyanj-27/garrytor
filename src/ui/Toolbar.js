@@ -248,10 +248,11 @@ export class Toolbar {
     rightSec.appendChild(toggleContainer);
 
     // PWA Install Button in Toolbar Header
+    const isInstalled = window.isPWAInstalled ? window.isPWAInstalled() : false;
     const installBtn = document.createElement('button');
     installBtn.className = 'btn btn-ghost pwa-install-btn flex-row gap-xs align-center';
     installBtn.style.fontSize = 'var(--font-size-xs)';
-    installBtn.style.display = 'flex';
+    installBtn.style.display = isInstalled ? 'none' : 'flex';
     installBtn.innerHTML = `
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
