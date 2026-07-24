@@ -1,8 +1,13 @@
 // Garrytor Service Worker — enables PWA install and offline shell caching
-const CACHE_NAME = 'garrytor-v1';
+const CACHE_NAME = 'garrytor-v2';
 
 // Cache the app shell on install
 self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(['/', '/index.html']).catch(() => {});
+    })
+  );
   self.skipWaiting();
 });
 
@@ -20,14 +25,12 @@ self.addEventListener('activate', (event) => {
 
 // Network-first strategy: try network, fall back to cache
 self.addEventListener('fetch', (event) => {
-  // Skip non-GET requests and cross-origin requests
   if (event.request.method !== 'GET') return;
   
   event.respondWith(
     fetch(event.request)
       .then((response) => {
-        // Cache successful responses
-        if (response.ok) {
+        if (response && response.status === 200) {
           const clone = response.clone();
           caches.open(CACHE_NAME).then((cache) => {
             cache.put(event.request, clone);
@@ -36,8 +39,7 @@ self.addEventListener('fetch', (event) => {
         return response;
       })
       .catch(() => {
-        // Fallback to cache if network fails
-        return caches.match(event.request);
+        return caches.match(event.request).then(res => res || caches.match('/index.html'));
       })
   );
 });
