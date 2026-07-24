@@ -54,8 +54,8 @@ export class MaskingPanel {
     maskTypes.forEach(t => {
       const btn = document.createElement('button');
       btn.className = 'btn btn-ghost flex-row gap-xs align-center justify-center';
-      btn.style.fontSize = '12px';
-      btn.style.fontWeight = '500';
+      btn.style.fontSize = '13px';
+      btn.style.fontWeight = '600';
       btn.style.padding = '8px 4px';
       btn.style.backgroundColor = 'var(--bg-tertiary)';
       btn.style.border = '1px solid var(--border-color)';

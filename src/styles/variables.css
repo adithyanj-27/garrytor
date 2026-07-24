@@ -23,15 +23,15 @@
   --warning: #f59e0b;
   --info: #3b82f6;
 
-  /* Typography */
-  --font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-family-logo: 'Playfair Display', serif;
-  --font-size-xs: 11px;
-  --font-size-sm: 12px;
-  --font-size-md: 14px;
-  --font-size-lg: 16px;
-  --font-size-xl: 20px;
-  --font-size-xxl: 24px;
+  /* Typography - Sharp & Classy Modern Studio */
+  --font-family: 'Space Grotesk', 'Manrope', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-family-logo: 'Space Grotesk', sans-serif;
+  --font-size-xs: 13px;
+  --font-size-sm: 14px;
+  --font-size-md: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 22px;
+  --font-size-xxl: 28px;
   
   /* Layout & Spacing */
   --spacing-xs: 4px;
