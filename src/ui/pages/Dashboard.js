@@ -58,9 +58,10 @@ export class Dashboard {
     const initial = displayName.charAt(0).toUpperCase() || 'U';
 
     const profilePill = document.createElement('div');
-    profilePill.className = 'profile-pill flex-row gap-xs align-center';
+    profilePill.className = 'profile-pill flex-row align-center';
     profilePill.style.cursor = 'pointer';
-    profilePill.style.padding = '4px 10px 4px 6px';
+    profilePill.style.gap = '10px';
+    profilePill.style.padding = '5px 14px 5px 6px';
     profilePill.style.backgroundColor = 'var(--bg-tertiary)';
     profilePill.style.border = '1px solid var(--border-color)';
     profilePill.style.borderRadius = '20px';
@@ -69,8 +70,8 @@ export class Dashboard {
     profilePill.style.transition = 'all 0.2s';
     profilePill.title = 'View Profile Details';
     profilePill.innerHTML = `
-      <div style="width: 24px; height: 24px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-color) 0%, #ff3e55 100%); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px;">${initial}</div>
-      <span style="color: var(--text-primary);">${displayName}</span>
+      <div style="width: 24px; height: 24px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-color) 0%, #ff3e55 100%); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px; flex-shrink: 0;">${initial}</div>
+      <span style="color: var(--text-primary); letter-spacing: -0.01em;">${displayName}</span>
     `;
     profilePill.addEventListener('click', () => {
       new ProfileModal(this.user, { onSignOut: this.onSignOut }).open();
