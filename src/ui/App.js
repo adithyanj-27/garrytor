@@ -50,6 +50,7 @@ export class App {
     this.lastHealMapPngData = null;
 
     this._isRouting = false;
+    this._initialAuthDone = false;
 
     // Listen for Supabase Authentication state updates
     onAuthStateChange((event, session) => {
@@ -63,7 +64,12 @@ export class App {
         window.location.hash = '#/dashboard';
       }
       
-      this.route();
+      // Only trigger route if initial load OR auth user ID actually changed!
+      // Ignores TOKEN_REFRESHED / tab focus re-entry so editor never refreshes on tab switch!
+      if (!this._initialAuthDone || (prevUserId !== null && prevUserId !== newUserId)) {
+        this._initialAuthDone = true;
+        this.route();
+      }
     });
 
     // Register global hotkey shortcuts
@@ -75,6 +81,18 @@ export class App {
 
   // Session routing shell
   route() {
+    const hash = window.location.hash;
+
+    // Guard: If we are already editing this project and viewport is active, do NOT destroy/re-mount!
+    if (hash.startsWith('#/edit/')) {
+      const projId = hash.replace('#/edit/', '');
+      if (this.currentProject && this.currentProject.id.toString() === projId.toString()) {
+        if (this.viewport && this.root.querySelector('.editor-container')) {
+          return;
+        }
+      }
+    }
+
     // Re-entrancy guard: prevent double-renders
     if (this._isRouting) return;
     this._isRouting = true;
@@ -114,8 +132,6 @@ export class App {
         });
       }
     }
-
-    const hash = window.location.hash;
     
     // Check if explicitly trying to log in/sign up
     if (hash === '#/login') {
