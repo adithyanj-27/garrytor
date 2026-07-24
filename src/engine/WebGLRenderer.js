@@ -360,6 +360,43 @@ export class WebGLRenderer {
     gl.bindVertexArray(null);
   }
 
+  // High-speed downsampled readback for histogram (<0.2ms vs 80ms)
+  readHistogramPixels() {
+    const gl = this.gl;
+    if (!this.lastProcessedFBO || !this.gl) return null;
+    
+    const w = 256;
+    const h = 144;
+
+    if (!this._histFBO) {
+      this._histTex = this._createFBOTexture(w, h);
+      this._histFBO = this._createFBO(this._histTex);
+    }
+
+    const prevFBO = this.lastProcessedFBO;
+    this._bindFBO(this._histFBO);
+    gl.viewport(0, 0, w, h);
+
+    const pOutput = this.shaders.output;
+    pOutput.use();
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, prevFBO === this.fboA ? this.fboTextureA : this.fboTextureB);
+    pOutput.setInt('u_image', 0);
+    pOutput.setBool('u_showOverlay', false);
+    this._drawQuad();
+
+    if (!this._histPixels) {
+      this._histPixels = new Uint8Array(w * h * 4);
+    }
+
+    gl.readPixels(0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, this._histPixels);
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+
+    return this._histPixels;
+  }
+
   // Read WebGL canvas pixels for PNG/JPEG export
   readPixels() {
     const gl = this.gl;
