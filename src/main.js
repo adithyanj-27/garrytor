@@ -19,10 +19,8 @@ window.addEventListener('DOMContentLoaded', () => {
 
 // ── PWA: Register Service Worker ──
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(() => {
-      // Service worker registration failed silently — not critical
-    });
+  navigator.serviceWorker.register('/sw.js').catch((err) => {
+    console.warn('SW registration failed:', err);
   });
 }
 
