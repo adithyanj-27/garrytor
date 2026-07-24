@@ -67,19 +67,20 @@
 }
 
 .accordion-header {
-  padding: var(--spacing-md) var(--spacing-sm);
+  padding: 14px 16px;
   cursor: pointer;
   display: flex;
   justify-content: space-between;
   align-items: center;
   color: var(--text-primary);
-  font-size: var(--font-size-sm);
+  font-size: 14px;
   font-weight: 600;
+  letter-spacing: -0.01em;
   transition: background-color 0.2s;
 }
 
 .accordion-header:hover {
-  background-color: rgba(255, 255, 255, 0.02);
+  background-color: rgba(255, 255, 255, 0.03);
 }
 
 .accordion-header svg {
@@ -92,7 +93,7 @@
 }
 
 .accordion-content {
-  padding: var(--spacing-sm) var(--spacing-sm) var(--spacing-md) var(--spacing-sm);
+  padding: 12px 16px 16px 16px;
   transition: max-height 0.3s ease-out;
   overflow: hidden;
 }
@@ -112,14 +113,17 @@
 .slider-label-row {
   display: flex;
   justify-content: space-between;
-  font-size: var(--font-size-xs);
+  align-items: center;
+  font-size: 12px;
+  font-weight: 500;
   color: var(--text-secondary);
 }
 
 .slider-value {
   color: var(--text-primary);
-  font-family: monospace;
-  font-size: var(--font-size-sm);
+  font-family: var(--font-family);
+  font-weight: 600;
+  font-size: 12px;
 }
 
 .slider-wrapper {

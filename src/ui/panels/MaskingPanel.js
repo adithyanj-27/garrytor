@@ -48,14 +48,17 @@ export class MaskingPanel {
     const btnGrid = document.createElement('div');
     btnGrid.style.display = 'grid';
     btnGrid.style.gridTemplateColumns = 'repeat(4, 1fr)';
-    btnGrid.style.gap = '4px';
+    btnGrid.style.gap = '6px';
     btnGrid.style.width = '100%';
     
     maskTypes.forEach(t => {
       const btn = document.createElement('button');
       btn.className = 'btn btn-ghost flex-row gap-xs align-center justify-center';
-      btn.style.fontSize = '11px';
-      btn.style.padding = '6px 2px';
+      btn.style.fontSize = '12px';
+      btn.style.fontWeight = '500';
+      btn.style.padding = '8px 4px';
+      btn.style.backgroundColor = 'var(--bg-tertiary)';
+      btn.style.border = '1px solid var(--border-color)';
       btn.innerHTML = t.label;
       btn.addEventListener('click', () => this.createNewMask(t.type));
       btnGrid.appendChild(btn);

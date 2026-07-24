@@ -1,5 +1,6 @@
 import { PresetManager } from '../../state/PresetManager';
 import { Toast } from '../components/Toast';
+import { Icons } from '../components/Icons';
 
 export class PresetsPanel {
   constructor(container, editState, historyManager, userId = null) {
@@ -33,9 +34,10 @@ export class PresetsPanel {
     clipActions.style.gap = '8px';
 
     const copyBtn = document.createElement('button');
-    copyBtn.className = 'btn btn-ghost';
+    copyBtn.className = 'btn btn-ghost flex-row gap-xs align-center justify-center';
     copyBtn.style.flex = '1';
-    copyBtn.innerHTML = '📋 Copy Settings';
+    copyBtn.style.fontSize = '12px';
+    copyBtn.innerHTML = `${Icons.splitCompare} <span>Copy Settings</span>`;
     copyBtn.addEventListener('click', () => {
       this.presetManager.copySettings(this.editState);
       pasteBtn.disabled = false;
@@ -43,9 +45,10 @@ export class PresetsPanel {
     });
 
     const pasteBtn = document.createElement('button');
-    pasteBtn.className = 'btn btn-ghost';
+    pasteBtn.className = 'btn btn-ghost flex-row gap-xs align-center justify-center';
     pasteBtn.style.flex = '1';
-    pasteBtn.innerHTML = '📋 Paste Settings';
+    pasteBtn.style.fontSize = '12px';
+    pasteBtn.innerHTML = `${Icons.adjustments} <span>Paste Settings</span>`;
     pasteBtn.disabled = !this.presetManager.hasCopiedSettings();
     pasteBtn.addEventListener('click', () => {
       // Save current state for undo
@@ -62,8 +65,8 @@ export class PresetsPanel {
 
     // Save Preset Button
     const savePresetBtn = document.createElement('button');
-    savePresetBtn.className = 'btn btn-primary';
-    savePresetBtn.innerHTML = '➕ Save Current as Preset';
+    savePresetBtn.className = 'btn btn-primary flex-row gap-xs align-center justify-center';
+    savePresetBtn.innerHTML = `${Icons.plus} <span>Save Current as Preset</span>`;
     savePresetBtn.addEventListener('click', () => this.onSavePresetPrompt());
     panel.appendChild(savePresetBtn);
 

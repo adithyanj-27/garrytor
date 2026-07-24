@@ -42,8 +42,8 @@
   --spacing-xxl: 32px;
   
   --header-height: 52px;
-  --sidebar-width: 320px;
-  --left-panel-width: 260px;
+  --sidebar-width: 380px;
+  --left-panel-width: 290px;
   
   /* Corners & Shadows */
   --radius-xs: 4px;
@@ -58,4 +58,11 @@
   --glass-bg: rgba(22, 22, 26, 0.85);
   --glass-blur: blur(20px);
   --glass-border: rgba(255, 255, 255, 0.05);
+}
+
+@media (min-width: 1440px) {
+  :root {
+    --sidebar-width: 420px;
+    --left-panel-width: 310px;
+  }
 }
