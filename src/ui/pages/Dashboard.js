@@ -84,12 +84,12 @@ export class Dashboard {
       rightGroup.appendChild(signoutBtn);
     }
 
-    // PWA Install Button (hidden by default, shown when browser fires beforeinstallprompt)
+    // PWA Install Button
     const installBtn = document.createElement('button');
     installBtn.id = 'pwa-install-btn';
-    installBtn.className = 'btn btn-ghost';
+    installBtn.className = 'btn btn-ghost pwa-install-btn';
     installBtn.style.fontSize = 'var(--font-size-xs)';
-    installBtn.style.display = 'none';
+    installBtn.style.display = 'flex';
     installBtn.style.alignItems = 'center';
     installBtn.style.gap = '6px';
     installBtn.innerHTML = `

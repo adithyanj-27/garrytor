@@ -244,6 +244,24 @@ export class Toolbar {
     toggleContainer.appendChild(switchLabel);
     rightSec.appendChild(toggleContainer);
 
+    // PWA Install Button in Toolbar Header
+    const installBtn = document.createElement('button');
+    installBtn.className = 'btn btn-ghost pwa-install-btn flex-row gap-xs align-center';
+    installBtn.style.fontSize = 'var(--font-size-xs)';
+    installBtn.style.display = 'flex';
+    installBtn.innerHTML = `
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="7 10 12 15 17 10"/>
+        <line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+      <span>Install App</span>
+    `;
+    installBtn.addEventListener('click', () => {
+      if (window.triggerPWAInstall) window.triggerPWAInstall();
+    });
+    rightSec.appendChild(installBtn);
+
     // Main Export Button
     const exportBtn = document.createElement('button');
     exportBtn.className = 'btn btn-primary';

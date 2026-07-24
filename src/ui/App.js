@@ -10,6 +10,7 @@ import { exportCanvas } from '../utils/ExportUtils';
 // Components & Views
 import { Toast } from './components/Toast';
 import { Icons } from './components/Icons';
+window.GarrytorToast = Toast;
 import { OnboardingTour } from './components/OnboardingTour';
 import { AuthPage } from './pages/AuthPage';
 import { Dashboard } from './pages/Dashboard';
